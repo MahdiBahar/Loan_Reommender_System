@@ -1,0 +1,4 @@
+#openai
+langchain_community
+#langchain
+numexpr
