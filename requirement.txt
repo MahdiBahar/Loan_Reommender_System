@@ -2,3 +2,4 @@
 langchain_community
 #langchain
 numexpr
+streamlit
