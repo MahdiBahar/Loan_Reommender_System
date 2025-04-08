@@ -11,7 +11,7 @@ import json
 
 extraction_chain = extract_chain()
 
-st.title("Loan Chatbot")
+st.title("چت بات تسهیلات")
 
 
 
@@ -42,21 +42,23 @@ if prompt:
     try:
         extracted_params = parse_extraction_result(extraction_result)
         st.session_state["params"] = extracted_params
+        result = st.session_state["params"]
+        result_str = json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:
-        st.error(f"Error parsing extraction result: {e}")
-    
-    updated_params = validate_parameters(st.session_state["params"])
+        # st.error(f"Error parsing extraction result: {e}")
+        result_str = "با توجه به اینکه من چت بات مخصوص تسهیلات هستم، متاسفانه در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد مضوعات مرتبط باهام صحبت کن"
+    # updated_params = validate_parameters(st.session_state["params"])
 #         st.session_state["params"] = updated_params
 
-    st.session_state["params"] = updated_params
-
-    result = st.session_state["params"]
+    # st.session_state["params"] = updated_params
+    # st.session_state["params"] = extracted_params
+    
     
 
 
 
     # Convert the result dictionary to a string before appending to chat messages.
-    result_str = json.dumps(result, indent=2, ensure_ascii=False)
+  
     with st.chat_message("assistant"):
         st.markdown(result_str)
         st.session_state.messages.append(AIMessage(result_str))
