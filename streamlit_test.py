@@ -71,6 +71,16 @@ if st.session_state.param_index < len(REQUIRED_PARAMS):
     
     st.chat_message("assistant").markdown(prompt_message)
     
+
+    if current_val is not None and VALID_CRITERIA[current_param](current_val):
+        if st.button(f"Keep current value for {current_param}", key=f"keep_{current_param}"):
+            st.session_state.params[current_param] = current_val
+            add_message("assistant", f"'{current_param}' is kept as {current_val}.")
+            st.session_state.param_index += 1
+            # st.experimental_rerun()
+
+
+
     # Get the user's response for the current parameter.
     user_response = st.chat_input(f"Your response for '{current_param}':", key=current_param)
     # user_response = st.text_input(f"Your response for '{current_param}' (leave blank to keep current):", key=current_param)
@@ -85,11 +95,11 @@ if st.session_state.param_index < len(REQUIRED_PARAMS):
                 updated_val = None
         else:
             try:
-                if current_param in ["deposit_duration", "loan_amount", "number_of_installments", "interest_rate"]:
-                    if current_param == "deposit_amount":
-                        updated_val = float(user_response)
-                    else:
-                        updated_val = int(user_response)
+                if current_param in ["deposit_duration", "loan_amount", "number_of_installments", "interest_rate", "deposit_amount"]:
+                    # if current_param == "deposit_amount":
+                    updated_val = float(user_response)
+                    # else:
+                        # updated_val = int(user_response)
                 else:
                     updated_val = user_response.upper()
             except Exception:
@@ -101,17 +111,26 @@ if st.session_state.param_index < len(REQUIRED_PARAMS):
                 "It will be set to None."
             )
             st.session_state.params[current_param] = None
+
+        elif updated_val is not None and VALID_CRITERIA[current_param](current_val):
+
+            st.session_state.params[current_param] = updated_val
+            st.chat_message("assistant").markdown(
+                f"'The value of {current_param}' is not changed and will be : {updated_val}"
+            )
+            add_message("user", user_response if user_response != "z" else "(kept current)")
+            add_message("assistant", f"{current_param} is set to {st.session_state.params[current_param]}")
         else:
             st.session_state.params[current_param] = updated_val
             st.chat_message("assistant").markdown(
                 f"'{current_param}' is updated to: {updated_val}"
             )
         
-        add_message("user", user_response if user_response != "" else "(kept current)")
-        add_message("assistant", f"{current_param} is now set to {st.session_state.params[current_param]}")
+            add_message("user", user_response if user_response != "z" else "(kept current)")
+            add_message("assistant", f"{current_param} is now set to {st.session_state.params[current_param]}")
         
         st.session_state.param_index += 1
-
+    
 # When all parameters have been processed, display the final parameters.
 if st.session_state.param_index >= len(REQUIRED_PARAMS):
     st.chat_message("assistant").markdown("All parameters have been verified:")
