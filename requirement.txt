@@ -3,3 +3,4 @@ langchain_community
 #langchain
 numexpr
 streamlit
+polars #for wizard solution
