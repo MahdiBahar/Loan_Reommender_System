@@ -1,0 +1,24 @@
+def calculate_monthly_repayment(loan_amount, interest_rate, repayment_duration):
+
+    # Convert annual interest rate to monthly interest rate (decimal)
+    monthly_interest_rate = (interest_rate / (12*100))
+    
+
+    # Apply the formula from the Excel file
+    numerator = loan_amount * monthly_interest_rate * ((1 + monthly_interest_rate) ** repayment_duration)
+    denominator = ((1 + monthly_interest_rate) ** repayment_duration) - 1
+    monthly_repayment = numerator / denominator
+
+
+    return round(monthly_repayment)
+
+# Example usage
+loan_amount = 1000000000  # 1 billion
+interest_rate = 23  # 23%
+repayment_duration = 12  # 36 months
+
+monthly_repayment = calculate_monthly_repayment(loan_amount, interest_rate, repayment_duration)
+
+
+print(f"Monthly repayment amount: {monthly_repayment}")
+
