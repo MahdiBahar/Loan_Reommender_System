@@ -4,3 +4,4 @@ langchain_community
 numexpr
 streamlit
 polars #for wizard solution
+openpyxl #for wizard solution
