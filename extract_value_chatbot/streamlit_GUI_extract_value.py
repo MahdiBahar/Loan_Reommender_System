@@ -41,7 +41,8 @@ def format_params_message(params: dict) -> str:
         if value is not None:
             lines.append(f" {LABELS[key]}: {value}{SUFFIXES[key]}")
     if not lines:
-        return "هنوز مقادیری تعیین نشده‌اند."
+        return  "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد موضوعات مرتبط با من صحبت کن."
+        
     msg = "تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
     msg += "\n".join(lines)
     msg += "\n"
