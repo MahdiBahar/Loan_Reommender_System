@@ -41,7 +41,7 @@ def format_params_message(params: dict) -> str:
         if value is not None:
             lines.append(f" {LABELS[key]}: {value}{SUFFIXES[key]}")
     if not lines:
-        return "هنوز مقادیری برای اینکه بتوانم وام معرفی کنم، تعیین نکردی!"
+        return "هنوز مقادیری تعیین نشده‌اند."
     msg = "تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
     msg += "\n".join(lines)
     msg += "\n"
@@ -51,7 +51,26 @@ def format_params_message(params: dict) -> str:
 # Build the LLM extraction chain
 extraction_chain = extract_chain()
 
-st.title("وام چی داریم")
+# Inject RTL CSS for inputs and chat messages
+st.markdown(
+    """
+    <style>
+    /* RTL support for all text inputs and chat bubbles */
+    input, textarea {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    h1 {
+        direction: rtl;
+        text-align: right;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# App title using markdown for RTL
+st.markdown('<h1>وام چی داریم</h1>', unsafe_allow_html=True)
 
 # Initialize chat history and parameters
 if "messages" not in st.session_state:
@@ -63,18 +82,27 @@ if "params" not in st.session_state:
 for message in st.session_state.messages:
     if isinstance(message, HumanMessage):
         with st.chat_message("user"):
-            st.markdown(message.content)
+            st.markdown(
+                f'<div dir="rtl" style="text-align: right;">{message.content}</div>',
+                unsafe_allow_html=True,
+            )
     elif isinstance(message, AIMessage):
         with st.chat_message("assistant"):
-            st.text(message.content)
+            st.markdown(
+                f'<div dir="rtl" style="text-align: right;">{message.content}</div>',
+                unsafe_allow_html=True,
+            )
 
-# User input
-prompt = st.chat_input("چطور میتونم کمکت کنم؟")
+# User input with RTL placeholder
+prompt = st.chat_input(placeholder="چطور میتونم کمکت کنم؟")
 
 if prompt:
     # Show user message
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(
+            f'<div dir="rtl" style="text-align: right;">{prompt}</div>',
+            unsafe_allow_html=True,
+        )
         st.session_state.messages.append(HumanMessage(prompt))
 
     try:
@@ -84,7 +112,6 @@ if prompt:
 
         # If no parameter was provided, treat as irrelevant
         if not any(v is not None for v in new_params.values()):
-            # Irrelevant question fallback
             apology = (
                 "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
                 "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
@@ -119,18 +146,16 @@ if prompt:
                         f"پیشنهاد می‌کنم دوباره مقدار درست را به ما بگی.\n"
                         f"راهنمایی: {label} میتواند {valid_hint} باشد"
                     )
-            # If any invalid inputs, prepare error response
             if invalid_msgs:
                 apology = "\n".join(invalid_msgs)
                 params_msg = format_params_message(st.session_state.params)
                 result_str = f"{apology}\n\n{params_msg}"
             else:
-                # merge valid updates into session params
                 st.session_state.params.update(valid_updates)
                 result_str = format_params_message(st.session_state.params)
 
     except Exception:
-        # Parsing error fallback (also treat as irrelevant)
+        # Irrelevant or parsing error fallback
         apology = (
             "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
             "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
@@ -141,5 +166,8 @@ if prompt:
 
     # Display assistant response
     with st.chat_message("assistant"):
-        st.text(result_str)
+        st.markdown(
+            f'<div dir="rtl" style="text-align: right;">{result_str.replace("\n", "<br>")}</div>',
+            unsafe_allow_html=True,
+        )
         st.session_state.messages.append(AIMessage(result_str))
