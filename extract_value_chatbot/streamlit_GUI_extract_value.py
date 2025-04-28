@@ -41,8 +41,7 @@ def format_params_message(params: dict) -> str:
         if value is not None:
             lines.append(f" {LABELS[key]}: {value}{SUFFIXES[key]}")
     if not lines:
-        return  "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد موضوعات مرتبط با من صحبت کن."
-        
+        return "هنوز مقادیری برای اینکه بتوانم وام معرفی کنم، تعیین نکردی!"
     msg = "تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
     msg += "\n".join(lines)
     msg += "\n"
@@ -83,55 +82,64 @@ if prompt:
         raw_output = extraction_chain.predict(user_input=prompt)
         new_params = clean_and_parse(raw_output)
 
-        # Check validity of each provided parameter
-        invalid_msgs = []
-        valid_updates = {}
-        for key, value in new_params.items():
-            if value is None:
-                continue
-            crit = VALID_CRITERIA.get(key)
-            is_valid = True
-            valid_hint = None
-            if isinstance(crit, list):
-                if value not in crit:
-                    is_valid = False
-                    valid_hint = ", ".join(str(v) for v in crit if v is not None)
-            elif callable(crit):
-                if not crit(value):
-                    is_valid = False
-                    valid_hint = "<= 300000000"
-            # None criterion implies always valid
-            if is_valid:
-                valid_updates[key] = value
-            else:
-                # build an invalid message for this field
-                label = LABELS.get(key, key)
-                invalid_msgs.append(
-                    f"ببین مقداری که برای {label} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
-                    f"پیشنهاد می‌کنم دوباره مقدار درست را به ما بگی.\n"
-                    f"راهنمایی: {label} میتواند {valid_hint} باشد"
-                )
-        # If any invalid inputs, respond with errors
-        if invalid_msgs:
-            apology = "\n".join(invalid_msgs)
+        # If no parameter was provided, treat as irrelevant
+        if not any(v is not None for v in new_params.values()):
+            # Irrelevant question fallback
+            apology = (
+                "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
+                "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
+                "موضوعات مرتبط با من صحبت کن."
+            )
             params_msg = format_params_message(st.session_state.params)
-            result_str = f"{apology}\n{params_msg}"
+            result_str = f"{apology}\n\n{params_msg}"
         else:
-            # merge valid updates into session params
-            st.session_state.params.update(valid_updates)
-            result_str = format_params_message(st.session_state.params)
+            # Check validity of each provided parameter
+            invalid_msgs = []
+            valid_updates = {}
+            for key, value in new_params.items():
+                if value is None:
+                    continue
+                crit = VALID_CRITERIA.get(key)
+                is_valid = True
+                valid_hint = None
+                if isinstance(crit, list):
+                    if value not in crit:
+                        is_valid = False
+                        valid_hint = ", ".join(str(v) for v in crit if v is not None)
+                elif callable(crit):
+                    if not crit(value):
+                        is_valid = False
+                        valid_hint = "<= 300000000"
+                if is_valid:
+                    valid_updates[key] = value
+                else:
+                    label = LABELS.get(key, key)
+                    invalid_msgs.append(
+                        f"ببین مقداری که برای {label} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
+                        f"پیشنهاد می‌کنم دوباره مقدار درست را به ما بگی.\n"
+                        f"راهنمایی: {label} میتواند {valid_hint} باشد"
+                    )
+            # If any invalid inputs, prepare error response
+            if invalid_msgs:
+                apology = "\n".join(invalid_msgs)
+                params_msg = format_params_message(st.session_state.params)
+                result_str = f"{apology}\n\n{params_msg}"
+            else:
+                # merge valid updates into session params
+                st.session_state.params.update(valid_updates)
+                result_str = format_params_message(st.session_state.params)
 
     except Exception:
-        # Irrelevant question fallback
+        # Parsing error fallback (also treat as irrelevant)
         apology = (
             "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
             "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
             "موضوعات مرتبط با من صحبت کن."
         )
         params_msg = format_params_message(st.session_state.params)
-        result_str = f"{apology}\n{params_msg}"
+        result_str = f"{apology}\n\n{params_msg}"
 
-    # Display assistant message
+    # Display assistant response
     with st.chat_message("assistant"):
         st.text(result_str)
         st.session_state.messages.append(AIMessage(result_str))
