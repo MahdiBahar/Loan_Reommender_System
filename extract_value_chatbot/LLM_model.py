@@ -13,29 +13,43 @@ llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434")
 
 
 
-# Create a prompt template for extracting parameters.
+
 extraction_prompt = PromptTemplate(
     input_variables=["user_input"],
     template=(
-        "Given the following user input:\n"
-        "\"{user_input}\"\n\n"
-        "Extract the following parameters as a JSON object:\n"
-        "- deposit_amount: The amount of money deposited (if mentioned; otherwise, None).\n"
-        "- deposit_duration: The duration of the deposit in months (if mentioned; otherwise, None).\n"
-        "- loan_amount: The total loan amount (if mentioned; otherwise, None).\n"
-        "- credit_score (if mentioned; otherwise, None).\n"
-        "- number_of_installments (if mentioned; otherwise, None).\n"
-        "- interest_rate (if mentioned; otherwise, None).\n\n"
-        "If a parameter is not mentioned in the input, set its value to None.\n\n"
-        "Example output:\n"
-        "{{\n"
-        '  "deposit_amount": 5000000,\n'
-        '  "deposit_duration": 6,\n'
-        '  "loan_amount": "None",\n'
-        '  "credit_score": "None",\n'
-        '  "number_of_installments": "None",\n'
-        '  "interest_rate": "None"\n'
-        "}}"
+        # 1) absolutely forbid chain‐of‐thought
+        "Do not think. Do not output any reasoning—output **only** the JSON.\n\n"
+
+        # 2) define the fields
+        "Extract exactly these fields as JSON (no markdown, no fences):\n"
+        "- deposit_amount (float or null) : مقدار سپرده یا میانگین سپرده یا میزان پولی که کاربر دارد \n"
+        "- loan_amount (float or null) : مقدار وامی که کاربر میخواهد یا به او تعلق میگیرد\n"
+        "- deposit_duration (integer months or null) : مدت زمانی که پول یا سپرده مشتری در حساب بانکی باید باشد یا میخواهد باش یا در حسابش بخواباند\n"
+        "- repayment_duration (integer months or null) : مدت زمان بازپرداخت وام یا تعداد اقساط\n"
+        "- Credit_score (string or null) : امتیاز اعتباری یا رتبه اعتباری\n"
+        "- Interest_rate (integer percent without % or null) : نرخ سود وام یا کارمزد وام\n\n"
+        "مقدار سپرده و مقدار وام به صورت پیش فرض بر حسب تومان هستند. اگر کاربر به تومن مقادیر را بیان کرد آن را با فرض ریال بودن درنظر بگیر\n"
+        # 3) if a field is not mentioned, it must be null
+        "If missing, set its value to `null`. Numbers must be plain digits (e.g. 25000000),\n"
+        "no underscores, commas, or % signs.\n\n"
+
+        # 4) few‐shot example for missing durations
+        "### Example 1\n"
+        "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ میلیون پول بخوابونم چقدره\"\n"
+        "Output:\n"
+        '{{'
+        '"deposit_amount":600_000_000,'
+        '"deposit_duration":null,'
+        '"loan_amount":null,'
+        '"repayment_duration":null,'
+        '"Credit_score":null,'
+        '"Interest_rate":null'
+        '}}\n\n'
+
+        # 5) now YOUR input
+        "### Now process this input:\n"
+        "Input: \"{user_input}\"\n"
+        "Output:"
     )
 )
 
@@ -45,5 +59,4 @@ def extract_chain():
     extraction_chain = LLMChain(llm=llm, prompt=extraction_prompt, verbose=True)
     return extraction_chain
 #
-
 

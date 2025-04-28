@@ -1,5 +1,5 @@
 
-from LLM_parser_func import parse_extraction_result
+from LLM_parser_func import clean_and_parse
 from LLM_model import extract_chain
 from validate_params_func import validate_parameters
 import streamlit as st
@@ -11,7 +11,7 @@ import json
 
 extraction_chain = extract_chain()
 
-st.title("چت بات تسهیلات")
+st.title("وام چی داریم")
 
 
 
@@ -38,12 +38,18 @@ if prompt:
         st.session_state.messages.append(HumanMessage(prompt))
 
     # Run the extraction chain using the conversation history
-    extraction_result = extraction_chain.run({"user_input": st.session_state.messages})
+    # extraction_result = extraction_chain.predict(user_input= st.session_state.messages)
     try:
-        extracted_params = parse_extraction_result(extraction_result)
+        extraction_result = extraction_chain.predict(user_input= st.session_state.messages)
+        extracted_params = clean_and_parse(extraction_result)
         st.session_state["params"] = extracted_params
         result = st.session_state["params"]
+
         result_str = json.dumps(result, indent=2, ensure_ascii=False)
+
+        # result_str = extracted_params
+        
+
     except Exception as e:
         # st.error(f"Error parsing extraction result: {e}")
         result_str = "با توجه به اینکه من چت بات مخصوص تسهیلات هستم، متاسفانه در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد مضوعات مرتبط باهام صحبت کن"
@@ -64,4 +70,5 @@ if prompt:
         st.session_state.messages.append(AIMessage(result_str))
 
 
-##########_________________________________________________
+#########_________________________________________________
+
