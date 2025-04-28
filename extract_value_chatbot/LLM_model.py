@@ -10,8 +10,8 @@ import ast
 
 # Initialize the LLM (using Ollama in this example).
 llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434")
-
-
+# llm_paraphraser = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434")
+llm_paraphraser = Ollama(model="deepseek-r1:1.5b-qwen-distill-q4_K_M", base_url="http://127.0.0.1:11434")
 
 
 extraction_prompt = PromptTemplate(
@@ -59,4 +59,27 @@ def extract_chain():
     extraction_chain = LLMChain(llm=llm, prompt=extraction_prompt, verbose=True)
     return extraction_chain
 #
+
+
+paraphrase_prompt = PromptTemplate.from_template("""
+Take the following Persian loan-summary and rewrite it more conversationally:
+
+\"\"\"{summary}\"\"\"
+
+Make it sound different each time.
+for example: 
+        بسیار خب. تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:n/
+مقدار سپرده: 150000000n/
+مقدار وام: 100000000n/
+دوره بازپرداخت: 24 ماهn/
+رتبه اعتباری: B n/
+نرخ سود: 4 درصد   n/                                            
+""")
+
+
+def paraphrase_chain():
+# Create the extraction chain.
+    paraphraser = LLMChain(llm=llm_paraphraser, prompt=paraphrase_prompt, verbose=True)
+    return paraphraser
+
 

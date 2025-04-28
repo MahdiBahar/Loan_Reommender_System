@@ -1,5 +1,5 @@
 from LLM_parser_func import clean_and_parse
-from LLM_model import extract_chain
+from LLM_model import extract_chain , paraphrase_chain
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -19,7 +19,7 @@ LABELS = {
     "loan_amount": "مقدار وام",
     "deposit_duration": "مدت سپرده",
     "repayment_duration": "دوره بازپرداخت",
-    "Credit_score": "امتیاز اعتباری",
+    "Credit_score": "رتبه اعتباری",
     "Interest_rate": "نرخ سود",
 }
 SUFFIXES = {
@@ -51,7 +51,7 @@ def format_params_message(params: dict) -> str:
 
 # Build the LLM extraction chain
 extraction_chain = extract_chain()
-
+paraphriser = paraphrase_chain()
 # Inject RTL CSS for inputs, title, and user bubble alignment
 st.markdown(
     """
@@ -116,7 +116,10 @@ if prompt:
                 "با توجه به اینکه من چت‌بات توصیه گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مدنظرتان هست داشته باشم. بخاطر همین متاسفانه "
                 "در مورد پیامی که بهم دادی، پاسخ مشخصی ندارم."
             )
-            result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
+            base_summary = format_params_message(st.session_state.params)
+            result_paraphraser = paraphriser.run(summary=base_summary)
+            result_str = f"{apology}\n\n{result_paraphraser}"
+            # result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
         else:
             # Validate
             invalid_msgs = []
@@ -144,7 +147,10 @@ if prompt:
                     )
             if invalid_msgs:
                 apol = "\n".join(invalid_msgs)
-                result_str = f"{apol}\n\n{format_params_message(st.session_state.params)}"
+                base_summary = format_params_message(st.session_state.params)
+                result_paraphraser = paraphriser.run(summary=base_summary)
+                result_str = f"{apol}\n\n{result_paraphraser}"
+                # result_str = f"{apol}\n\n{format_params_message(st.session_state.params)}"
             else:
                 st.session_state.params.update(valid_updates)
                 result_str = format_params_message(st.session_state.params)
@@ -153,7 +159,10 @@ if prompt:
             "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
             "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد موضوعات مرتبط با من صحبت کن."
         )
-        result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
+        base_summary = format_params_message(st.session_state.params)
+        result_paraphraser = paraphriser.run(summary=base_summary)
+        result_str = f"{apology}\n\n{result_paraphraser}"
+        # result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
 
     # Display assistant response
     with st.chat_message("assistant"):
