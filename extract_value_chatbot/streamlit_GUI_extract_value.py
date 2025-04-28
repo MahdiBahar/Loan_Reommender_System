@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 # Validation criteria for each parameter
 VALID_CRITERIA = {
-    "deposit_amount": None,  # no limitation
+    "deposit_amount": None,
     "deposit_duration": [1, 2, 3, 6, 12],
     "loan_amount": lambda x: x <= 300_000_000,
     "Credit_score": ["A", "B", "C", "D", "E", None],
@@ -13,7 +13,7 @@ VALID_CRITERIA = {
     "Interest_rate": [4, 14, 18, 23],
 }
 
-# Labels and suffixes for user-friendly messages
+# Labels and suffixes for messages
 LABELS = {
     "deposit_amount": "مقدار سپرده",
     "loan_amount": "مقدار وام",
@@ -31,143 +31,134 @@ SUFFIXES = {
     "Interest_rate": " درصد",
 }
 
-# Helper: format extracted parameters into a user-friendly Persian message
-# Only non-null values are shown, each on its own line
-
+# Helper: format parameters message
 def format_params_message(params: dict) -> str:
     lines = []
     for key in ["deposit_amount", "loan_amount", "deposit_duration", "repayment_duration", "Credit_score", "Interest_rate"]:
-        value = params.get(key)
-        if value is not None:
-            lines.append(f" {LABELS[key]}: {value}{SUFFIXES[key]}")
+        val = params.get(key)
+        if val is not None:
+            lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
     if not lines:
         return "هنوز مقادیری تعیین نشده‌اند."
-    msg = "تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
+    msg = "بسیار خب. تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
     msg += "\n".join(lines)
     msg += "\n"
-    msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم."
+    msg += "\n"
+    msg += "با توجه به اطلاعاتی که به من دادی، برای تو ۲۵ وام مرتبط پیدا کردم\n"
+    
+    msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم.\n"
     return msg
 
 # Build the LLM extraction chain
 extraction_chain = extract_chain()
 
-# Inject RTL CSS for inputs and chat messages
+# Inject RTL CSS for inputs, title, and user bubble alignment
 st.markdown(
     """
     <style>
-    /* RTL support for all text inputs and chat bubbles */
-    input, textarea {
-        direction: rtl !important;
-        text-align: right !important;
-    }
-    h1 {
-        direction: rtl;
-        text-align: right;
+    /* RTL for inputs and title */
+    input, textarea { direction: rtl !important; text-align: right !important; }
+    h1 { direction: rtl; text-align: right !important; }
+    /* Reverse user chat bubble layout: avatar on the right */
+    [data-testid="stChatMessage"][role="user"] {
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        align-items: flex-start !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# App title using markdown for RTL
+# Title
 st.markdown('<h1>وام چی داریم</h1>', unsafe_allow_html=True)
 
-# Initialize chat history and parameters
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "params" not in st.session_state:
     st.session_state.params = {k: None for k in VALID_CRITERIA}
 
-# Display existing chat messages
-for message in st.session_state.messages:
-    if isinstance(message, HumanMessage):
+# Display chat history: preserve line breaks
+for msg in st.session_state.messages:
+    rendered = msg.content.replace("\n", "<br>")
+    if isinstance(msg, HumanMessage):
         with st.chat_message("user"):
             st.markdown(
-                f'<div dir="rtl" style="text-align: right;">{message.content}</div>',
-                unsafe_allow_html=True,
+                f'<div dir="rtl" style="text-align:right;">{rendered}</div>',
+                unsafe_allow_html=True
             )
-    elif isinstance(message, AIMessage):
+    else:
         with st.chat_message("assistant"):
             st.markdown(
-                f'<div dir="rtl" style="text-align: right;">{message.content}</div>',
-                unsafe_allow_html=True,
+                f'<div dir="rtl" style="text-align:right;">{rendered}</div>',
+                unsafe_allow_html=True
             )
 
-# User input with RTL placeholder
+# User input
 prompt = st.chat_input(placeholder="چطور میتونم کمکت کنم؟")
-
 if prompt:
     # Show user message
     with st.chat_message("user"):
         st.markdown(
-            f'<div dir="rtl" style="text-align: right;">{prompt}</div>',
-            unsafe_allow_html=True,
+            f'<div dir="rtl" style="text-align:right;">{prompt}</div>',
+            unsafe_allow_html=True
         )
         st.session_state.messages.append(HumanMessage(prompt))
 
+    # Process input
     try:
-        # Extract parameters
         raw_output = extraction_chain.predict(user_input=prompt)
         new_params = clean_and_parse(raw_output)
-
-        # If no parameter was provided, treat as irrelevant
+        # Irrelevant if no params
         if not any(v is not None for v in new_params.values()):
             apology = (
-                "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
-                "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
-                "موضوعات مرتبط با من صحبت کن."
+                "با توجه به اینکه من چت‌بات توصیه گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مدنظرتان هست داشته باشم. بخاطر همین متاسفانه "
+                "در مورد پیامی که بهم دادی، پاسخ مشخصی ندارم."
             )
-            params_msg = format_params_message(st.session_state.params)
-            result_str = f"{apology}\n\n{params_msg}"
+            result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
         else:
-            # Check validity of each provided parameter
+            # Validate
             invalid_msgs = []
             valid_updates = {}
-            for key, value in new_params.items():
-                if value is None:
+            for key, val in new_params.items():
+                if val is None:
                     continue
-                crit = VALID_CRITERIA.get(key)
-                is_valid = True
-                valid_hint = None
-                if isinstance(crit, list):
-                    if value not in crit:
-                        is_valid = False
-                        valid_hint = ", ".join(str(v) for v in crit if v is not None)
-                elif callable(crit):
-                    if not crit(value):
-                        is_valid = False
-                        valid_hint = "<= 300000000"
-                if is_valid:
-                    valid_updates[key] = value
+                crit = VALID_CRITERIA[key]
+                valid_flag = True
+                hint = None
+                if isinstance(crit, list) and val not in crit:
+                    valid_flag = False
+                    hint = ", ".join(str(x) for x in crit if x is not None)
+                if callable(crit) and not crit(val):
+                    valid_flag = False
+                    hint = "<= 300000000"
+                if valid_flag:
+                    valid_updates[key] = val
                 else:
-                    label = LABELS.get(key, key)
+                    label = LABELS[key]
                     invalid_msgs.append(
                         f"ببین مقداری که برای {label} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
                         f"پیشنهاد می‌کنم دوباره مقدار درست را به ما بگی.\n"
-                        f"راهنمایی: {label} میتواند {valid_hint} باشد"
+                        f"راهنمایی: {label} میتواند {hint} باشد"
                     )
             if invalid_msgs:
-                apology = "\n".join(invalid_msgs)
-                params_msg = format_params_message(st.session_state.params)
-                result_str = f"{apology}\n\n{params_msg}"
+                apol = "\n".join(invalid_msgs)
+                result_str = f"{apol}\n\n{format_params_message(st.session_state.params)}"
             else:
                 st.session_state.params.update(valid_updates)
                 result_str = format_params_message(st.session_state.params)
-
-    except Exception:
-        # Irrelevant or parsing error fallback
+    except:
         apology = (
             "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
-            "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد "
-            "موضوعات مرتبط با من صحبت کن."
+            "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد موضوعات مرتبط با من صحبت کن."
         )
-        params_msg = format_params_message(st.session_state.params)
-        result_str = f"{apology}\n\n{params_msg}"
+        result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
 
     # Display assistant response
     with st.chat_message("assistant"):
         st.markdown(
-            f'<div dir="rtl" style="text-align: right;">{result_str.replace("\n", "<br>")}</div>',
-            unsafe_allow_html=True,
+            f'<div dir="rtl" style="text-align:right;">{result_str.replace("\n","<br>")}</div>',
+            unsafe_allow_html=True
         )
         st.session_state.messages.append(AIMessage(result_str))
