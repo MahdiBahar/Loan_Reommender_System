@@ -1,38 +1,55 @@
 import random
 
-# A set of 5 varied Persian templates for loan-response summaries.
+# 1) Loan-summary templates
 TEMPLATES_SUMMARY = [
-    # Template 1
-    (
-        "بسیار خب، طبق اطلاعات شما:\n"
-        "{summary}"
-    ),
-    # Template 2
-    (
-        "مروری بر مقادیر دریافتی شما:\n"
-        "{summary}"
-    ),
-    # Template 3
-    (
-        "خوب، این مقادیر برای شما استخراج شدند:\n"
-        "{summary}"
-    ),
-    # Template 4
-    (
-        "طبق درخواست شما، این نتایج به دست آمد:\n"
-        "{summary}"
-    ),
-    # Template 5
-    (
-        "این هم خلاصه‌ای از مقادیر مدنظر شما:\n"
-        "{summary}"
-    ),
+    "بسیار خب، طبق اطلاعاتی که بهم دادی:\n{summary}",
+    "خب، تا اینجا که با هم صحبت کردیم:\n{summary}",
+    " تا اینجا، این مقادیر در خصوص وام استخراج شد:\n{summary}",
+    "طبق چتی که تا الان داشتیم، این نتایج در خصوص مقادیر مدنظر برای وام، به دست آمد:\n{summary}",
+    "این هم خلاصه‌ای از مقادیر مدنظر شماست:\n{summary}",
+]
+
+# 2) Navigator-invite templates
+TEMPLATES_INVITE = [
+    "اگر میخوای جزئیات بیشتری بدست بیاری، می‌تونم تو رو به صفحه توصیه‌گر وام هدایت کنم.",
+    "برای مشاهده شرایط دقیق‌تر وام‌ها، کافیه روی صفحه توصیه‌گر وام کلیک کنی.",
+    "اگر دوست داری اطلاعات دقیق‌تری در مورد وام‌ها داشته باشی، می‌تونم تو را به بخش توصیه‌گر وام ببرم.",
+    "قصد داری جزئیات بیشتری از وام‌ها ببینی؟ من تو رو به صفحه توصیه‌گر وام می‌برم.",
+    "برای کسب اطلاعات کامل‌تر و شرایط وام، می‌تونی به صفحه توصیه‌گر وام مراجعه کنی.",
+]
+
+# 3) Irrelevant-input apology templates
+TEMPLATES_IRRELEVANT = [
+    "با عرض پوزش، من چت‌بات مخصوص تسهیلات هستم و در مورد موضوعی که پرسیدی اطلاعاتی ندارم. لطفاً در زمینه وام صحبت کن.",
+    "متأسفم، من فقط اطلاعات وام‌ها رو مدیریت می‌کنم و در این مورد کمکی نمی‌تونم بکنم.",
+    "این موضوع خارج از حیطه تخصصی من یعنی تسهیلات بانکی هست، لطفاً درباره وام‌ها باهام صحبت کن.",
+    "متأسفانه در مورد این موضوع اطلاعات ندارم. من چت‌بات توصیه گر وام هستم، لطفاً در همین زمینه با هم صحبت کنیم.",
+    "عذرخواهی می‌کنم، من فقط در زمینه وام‌ها می‌تونم کمک کنم. سوالات دیگه رو نمی‌تونم پاسخ بدم.",
+]
+
+# 4) Invalid-parameter templates (use {label})
+TEMPLATES_INVALID = [
+    "مقداری که برای {label} وارد کردی در محدوده‌ی مجاز ما قرار نداره.",
+    "متأسفم، مقدار {label} که فرستادی مجاز نیست. لطفاً اصلاحش کن.",
+    "محدوده‌ی معتبر برای {label} متفاوت هست. لطفاً مقدار درست را وارد کن.",
+    "مقداری که برای {label} دادی اشتباه هست، ممنون می‌شم اصلاحش کنی.",
+    "لطفاً مقدار {label} را در بازه‌ی مجاز وارد کن؛ مقدار فعلی قابل پذیرش نیست.",
 ]
 
 
 def random_response_summary(summary: str) -> str:
-    """
-    Selects and returns one random phrasing for the given summary.
-    """
     template = random.choice(TEMPLATES_SUMMARY)
     return template.format(summary=summary)
+
+
+def random_invite() -> str:
+    return random.choice(TEMPLATES_INVITE)
+
+
+def random_irrelevant() -> str:
+    return random.choice(TEMPLATES_IRRELEVANT)
+
+
+def random_invalid(label: str) -> str:
+    template = random.choice(TEMPLATES_INVALID)
+    return template.format(label=label)

@@ -2,7 +2,15 @@ from LLM_parser_func import clean_and_parse
 from LLM_model import extract_chain
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
-from random_responses import random_response_summary  # Added import
+from random_responses import (
+    random_response_summary,
+    random_invite,
+    random_irrelevant,
+    random_invalid,
+)
+
+
+
 
 # Validation criteria for each parameter
 VALID_CRITERIA = {
@@ -44,11 +52,13 @@ def format_params_message(params: dict) -> str:
         if val is not None:
             lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
     if not lines:
-        return "هنوز مقادیری تعیین نشده‌اند."
-    msg = "بسیار خب. تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
-    msg += "\n".join(lines)
+        return "تا اینجا، هنوز مقادیری دریافت نکردم."
+    # msg = "بسیار خب. تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
+    # msg = random_invite() + "\n"
+    msg = "\n".join(lines)
     msg += "\n\n"
-    msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم."
+    msg += random_invite() + "\n"
+    # msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم."
     return msg
 
 # Build the LLM extraction chain
@@ -114,11 +124,12 @@ if prompt:
         new_params = clean_and_parse(raw_output)
         # Irrelevant if no params
         if not any(v is not None for v in new_params.values()):
-            apology = (
-                "با توجه به اینکه من چت‌بات توصیه‌گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مد نظرتان هست داشته باشم. "
-                "متأسفانه در مورد پیامی که فرستادید، نمی‌توانم پاسخ دهم."
-            )
-            result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
+            # apology = (
+            #     "با توجه به اینکه من چت‌بات توصیه‌گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مد نظرتان هست داشته باشم. "
+            #     "متأسفانه در مورد پیامی که فرستادید، نمی‌توانم پاسخ دهم."
+            # )
+            apology = random_irrelevant()
+            result_str = f"{apology}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
         else:
             invalid_msgs = []
             valid_updates = {}
@@ -137,21 +148,24 @@ if prompt:
                 if valid_flag:
                     valid_updates[key] = val
                 else:
-                    invalid_msgs.append(
-                        f"ببین مقداری که برای {LABELS[key]} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
-                        f"راهنمایی: {hint}"  
-                    )
+                    label = LABELS[key]
+                    invalid_msgs.append(random_invalid(label) + f"\nراهنمایی: {hint}")
+                    # invalid_msgs.append(
+                    #     f"ببین مقداری که برای {LABELS[key]} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
+                    #     f"راهنمایی: {hint}"  
+                    # )
             if invalid_msgs:
-                result_str = f"{'\n'.join(invalid_msgs)}\n\n{format_params_message(st.session_state.params)}"
+                result_str = f"{'\n'.join(invalid_msgs)}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
             else:
                 st.session_state.params.update(valid_updates)
                 # Use random template for summary
                 canonical = format_params_message(st.session_state.params)
                 result_str = random_response_summary(canonical)
     except Exception:
-        apology = (
-            "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متأسفانه در مورد موضوعی که فرستادید اطلاعی ندارم."
-        )
+        # apology = (
+        #     "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متأسفانه در مورد موضوعی که فرستادید اطلاعی ندارم."
+        # )
+        apology = random_irrelevant()
         result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
 
     # Display assistant response
