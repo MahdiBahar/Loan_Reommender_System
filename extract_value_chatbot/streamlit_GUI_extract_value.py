@@ -1,5 +1,5 @@
 from LLM_parser_func import clean_and_parse
-from LLM_model import extract_chain, advisor_chain
+from LLM_model import extract_chain
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 from random_responses import (
@@ -17,6 +17,7 @@ VALID_CRITERIA = {
     "Credit_score": ["A", "B", "C", "D", "E", None],
     "repayment_duration": [12, 24, 36, 48, 60],
     "Interest_rate": [4, 14, 18, 23],
+    "Loan_field": None,
 }
 
 # Labels and suffixes for messages
@@ -27,6 +28,7 @@ LABELS = {
     "repayment_duration": "دوره بازپرداخت",
     "Credit_score": "رتبه اعتباری",
     "Interest_rate": "نرخ سود",
+    "Loan_field": "حوزه وام",
 }
 SUFFIXES = {
     "deposit_amount": "",
@@ -35,6 +37,7 @@ SUFFIXES = {
     "repayment_duration": " ماه",
     "Credit_score": "",
     "Interest_rate": " درصد",
+    "Loan_field": "",
 }
 
 # Helper: format parameters message
@@ -49,7 +52,7 @@ def format_params_message(params: dict) -> str:
         if val is not None:
             lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
     if not lines:
-        return "تا اینجا، هنوز مقادیری دریافت نکردم."
+        return "هنوز مقادیری دریافت نکردم."
     msg = "\n".join(lines)
     msg += "\n\n"
     msg += random_invite() + "\n"
@@ -57,7 +60,7 @@ def format_params_message(params: dict) -> str:
 
 # Build the LLM chains
 extraction_chain = extract_chain()
-advisor_chain = advisor_chain()
+# advisor_chain = advisor_chain()
 
 # Inject RTL CSS
 st.markdown(
@@ -109,28 +112,23 @@ if prompt:
     raw_output = extraction_chain.predict(user_input=prompt)
     new_params = clean_and_parse(raw_output)
 
-    # 2) If extraction empty, check keywords
-    if not any(v is not None for v in new_params.values()):
-        keywords = ["وام", "تسهیلات", "تسهیلات خرد", "توصیه گر وام", "مشاور وام"]
-        if any(kw in prompt for kw in keywords):
-            # Use advisor chain
-            advice = advisor_chain.run(user_input=prompt)
-            with st.chat_message("assistant"):
-                st.markdown(
-                    f'<div dir="rtl" style="text-align:right;">{advice}</div>',
-                    unsafe_allow_html=True
-                )
-            st.session_state.messages.append(AIMessage(advice))
-            st.stop()
-        else:
-            # Truly irrelevant
-            apology = random_irrelevant()
-            result_str = f"{apology}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
+    other_keys = [k for k in new_params if k != "Loan_field"]
+    if new_params.get("Loan_field") and all(new_params.get(k) is None for k in other_keys):
+        result_str = (
+                    "من در خصوص وام اینکه چه نوع وامی با توجه به شرایطت مناسبه میتونم کمک کنم. "
+                    "برای ان منظور نیاز دارم که اطلاعاتی مثل اینکه چه مقدار وام میخوای، "
+                    "میخوای چند درصد باشه و غیره."
+        )
+
+    elif not any(v is not None for v in new_params.values()):
+
+        apology = random_irrelevant()
+        result_str = f"{apology}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
     else:
         # 3) Validate extracted params
         invalid_msgs, valid_updates = [], {}
         for key, val in new_params.items():
-            if val is None:
+            if key == "Loan_field" or val is None:
                 continue
             crit = VALID_CRITERIA[key]
             ok, hint = True, None
