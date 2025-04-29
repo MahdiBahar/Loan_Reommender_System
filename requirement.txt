@@ -2,6 +2,6 @@
 langchain_community
 #langchain
 numexpr
-streamlit
+streamlit #for chatbot
 polars #for wizard solution
 openpyxl #for wizard solution

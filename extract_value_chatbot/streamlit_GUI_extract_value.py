@@ -2,6 +2,7 @@ from LLM_parser_func import clean_and_parse
 from LLM_model import extract_chain
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
+from random_responses import random_response_summary  # Added import
 
 # Validation criteria for each parameter
 VALID_CRITERIA = {
@@ -32,9 +33,13 @@ SUFFIXES = {
 }
 
 # Helper: format parameters message
+
 def format_params_message(params: dict) -> str:
     lines = []
-    for key in ["deposit_amount", "loan_amount", "deposit_duration", "repayment_duration", "Credit_score", "Interest_rate"]:
+    for key in [
+        "deposit_amount", "loan_amount", "deposit_duration", 
+        "repayment_duration", "Credit_score", "Interest_rate"
+    ]:
         val = params.get(key)
         if val is not None:
             lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
@@ -42,15 +47,13 @@ def format_params_message(params: dict) -> str:
         return "هنوز مقادیری تعیین نشده‌اند."
     msg = "بسیار خب. تا اینجا برای من مشخص شده که مقادیر زیر مدنظر شما هست:\n"
     msg += "\n".join(lines)
-    msg += "\n"
-    msg += "\n"
-    msg += "با توجه به اطلاعاتی که به من دادی، برای تو ۲۵ وام مرتبط پیدا کردم\n"
-    
-    msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم.\n"
+    msg += "\n\n"
+    msg += "اگر میخوای که اطلاعات دقیق‌تری از وام‌ها و شرایطش داشته باشی می‌تونم تو رو به صفحه توصیه‌گر وام ببرم."
     return msg
 
 # Build the LLM extraction chain
 extraction_chain = extract_chain()
+
 # Inject RTL CSS for inputs, title, and user bubble alignment
 st.markdown(
     """
@@ -112,12 +115,11 @@ if prompt:
         # Irrelevant if no params
         if not any(v is not None for v in new_params.values()):
             apology = (
-                "با توجه به اینکه من چت‌بات توصیه گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مدنظرتان هست داشته باشم. بخاطر همین متاسفانه "
-                "در مورد پیامی که بهم دادی، پاسخ مشخصی ندارم."
+                "با توجه به اینکه من چت‌بات توصیه‌گر تسهیلات هستم، نیاز دارم که اطلاعاتی در مورد وامی که مد نظرتان هست داشته باشم. "
+                "متأسفانه در مورد پیامی که فرستادید، نمی‌توانم پاسخ دهم."
             )
             result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
         else:
-            # Validate
             invalid_msgs = []
             valid_updates = {}
             for key, val in new_params.items():
@@ -131,28 +133,25 @@ if prompt:
                     hint = ", ".join(str(x) for x in crit if x is not None)
                 if callable(crit) and not crit(val):
                     valid_flag = False
-                    hint = "<= 300000000"
+                    hint = "کوچکتر یا مساوی 300000000"
                 if valid_flag:
                     valid_updates[key] = val
                 else:
-                    label = LABELS[key]
                     invalid_msgs.append(
-                        f"ببین مقداری که برای {label} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
-                        f"پیشنهاد می‌کنم دوباره مقدار درست را به ما بگی.\n"
-                        f"راهنمایی: {label} میتواند {hint} باشد"
+                        f"ببین مقداری که برای {LABELS[key]} گفتی توی رنج تعریف شده برای وام‌های ما نیست. "
+                        f"راهنمایی: {hint}"  
                     )
             if invalid_msgs:
-                apol = "\n".join(invalid_msgs)
-                result_str = f"{apol}\n\n{format_params_message(st.session_state.params)}"
+                result_str = f"{'\n'.join(invalid_msgs)}\n\n{format_params_message(st.session_state.params)}"
             else:
                 st.session_state.params.update(valid_updates)
-                result_str = format_params_message(st.session_state.params)
-    except:
+                # Use random template for summary
+                canonical = format_params_message(st.session_state.params)
+                result_str = random_response_summary(canonical)
+    except Exception:
         apology = (
-            "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متاسفانه "
-            "در مورد موضوعی که بهم گفتی اطلاع خاصی ندارم. لطفا در مورد موضوعات مرتبط با من صحبت کن."
+            "با توجه به اینکه من چت‌بات مخصوص تسهیلات هستم، متأسفانه در مورد موضوعی که فرستادید اطلاعی ندارم."
         )
-
         result_str = f"{apology}\n\n{format_params_message(st.session_state.params)}"
 
     # Display assistant response
