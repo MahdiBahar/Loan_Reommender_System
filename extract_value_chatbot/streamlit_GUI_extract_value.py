@@ -14,7 +14,8 @@ from random_responses import (
 VALID_CRITERIA = {
     "deposit_amount": None,
     "deposit_duration": [1, 2, 3, 4, 6, 12],
-    "loan_amount": lambda x: x <= 300_000_000,
+    "loan_amount": lambda x: x <= 3_000_000_000,
+    # "loan_amount": None,
     "Credit_score": ["A", "B", "C", "D", "E", None],
     "repayment_duration": [12, 24, 36, 48, 60],
     "Interest_rate": [4, 14, 18, 23],
@@ -32,8 +33,8 @@ LABELS = {
     "Loan_field": "حوزه وام",
 }
 SUFFIXES = {
-    "deposit_amount": "",
-    "loan_amount": "",
+    "deposit_amount": " تومان",
+    "loan_amount": " تومان",
     "deposit_duration": " ماه",
     "repayment_duration": " ماه",
     "Credit_score": "",
@@ -129,7 +130,8 @@ if prompt:
     elif not any(v is not None for v in new_params.values()):
 
         apology = random_irrelevant()
-        result_str = f"{apology}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
+        result_str = f"{apology}\n\n"
+        # result_str = f"{apology}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
     else:
         # 3) Validate extracted params
         invalid_msgs, valid_updates = [], {}
@@ -147,7 +149,8 @@ if prompt:
             else:
                 invalid_msgs.append(random_invalid(LABELS[key]) + f"\nراهنمایی: {hint}")
         if invalid_msgs:
-            result_str = f"{'\n'.join(invalid_msgs)}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
+            # result_str = f"{'\n'.join(invalid_msgs)}\n\n{random_response_summary(format_params_message(st.session_state.params))}"
+            result_str = f"{'\n'.join(invalid_msgs)}\n\n"
         else:
             st.session_state.params.update(valid_updates)
             result_str = random_response_summary(format_params_message(st.session_state.params))

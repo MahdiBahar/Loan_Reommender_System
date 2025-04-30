@@ -25,18 +25,30 @@ def _build_extraction_chain() -> LLMChain:
             "- deposit_duration (integer months or null) : مدت زمانی که پول یا سپرده مشتری در حساب بانکی باید باشد یا میخواهد باش یا در حسابش بخواباند\n"
             "- repayment_duration (integer months or null) : مدت زمان بازپرداخت وام یا تعداد اقساط\n"
             "- Credit_score (string or null) : امتیاز اعتباری یا رتبه اعتباری\n"
-            "- Interest_rate (integer percent without % or null) : نرخ سود وام یا کارمزد وام\n\n"
-            "مقدار سپرده و مقدار وام به صورت پیش فرض بر حسب تومان هستند. اگر کاربر به تومن مقادیر را بیان کرد آن را با فرض ریال بودن درنظر بگیر\n"
+            "- Interest_rate (integer percent without % or null) :  نرخ سود وام یا کارمزد وام بر حسب درصد هست\n\n"
+            "مقدار سپرده و مقدار وام به صورت پیش فرض بر حسب تومان هستند. اگر در پرامپ کاربر عدد خالی گفته شد، مقدار عدد را در اسکیل میلیون درنظر بگیر\n"
             "If missing, set its value to `null`. Numbers must be plain digits (e.g. 25000000),\n"
             "no underscores, commas, or % signs.\n"
             "- Loan_field (True or null) : اگر پرامپت ورود در حوزه وام یا تسهیلات است مقدار این پارامتر True میشود در غیر این صورت مقدارش null هست\n\n"
             "### Example 1\n"
-            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ میلیون پول بخوابونم چقدره\"\n"
+            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومن پول بخوابونم چقدره\"\n"
             "Output:\n"
             "{{"
-            '"deposit_amount":600_000_000,'
+            '"deposit_amount":60_000_000,'
             '"deposit_duration":null,'
             '"loan_amount":null,'
+            '"repayment_duration":null,'
+            '"Credit_score":null,'
+            '"Interest_rate":null'
+            '"Loan_field":True'
+            '}}\n\n'
+            "### Example 2\n"
+            "Input: \یه وام ۲۰ میلیونی میخوام. با چهل میلیون سپرده چقدر وام بهم تعلق میگیره؟\"\n"
+            "Output:\n"
+            "{{"
+            '"deposit_amount":40_000_000,'
+            '"deposit_duration":null,'
+            '"loan_amount":20_000_000,'
             '"repayment_duration":null,'
             '"Credit_score":null,'
             '"Interest_rate":null'
