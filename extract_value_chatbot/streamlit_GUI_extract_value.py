@@ -111,7 +111,13 @@ if prompt:
 
     # 1) Try extraction
     raw_output = extraction_chain.predict(user_input=prompt)
-    new_params = clean_and_parse(raw_output)
+    # new_params = clean_and_parse(raw_output)
+    try:
+        new_params = clean_and_parse(raw_output)
+    except ValueError:
+        new_params = {k: None for k in VALID_CRITERIA}
+        apology = random_irrelevant()
+
 
     other_keys = [k for k in new_params if k != "Loan_field"]
     if new_params.get("Loan_field") and all(new_params.get(k) is None for k in other_keys):
