@@ -32,8 +32,8 @@ class ChatResponse(BaseModel):
     extracted_parameters_value: Dict[str, Optional[Any]]
     generated_message: str
 
-# class SessionRequest(BaseModel):
-#     session_id: str
+class SessionRequest(BaseModel):
+    session_id: str
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
@@ -64,11 +64,11 @@ async def chat(req: ChatRequest):
     )
 
 
-# @app.get("/close_session")
-# @app.post("/close_session")
-# async def close_session(req: SessionRequest):
-#     sid = req.session_id
-#     if sid in _sessions:
-#         del _sessions[sid]
-#         return {"status": "session closed"}
-#     raise HTTPException(status_code=404, detail="session not found")
+@app.get("/close_session")
+@app.post("/close_session")
+async def close_session(req: SessionRequest):
+    sid = req.session_id
+    if sid in _sessions:
+        del _sessions[sid]
+        return {"status": "session closed"}
+    raise HTTPException(status_code=404, detail="session not found")
