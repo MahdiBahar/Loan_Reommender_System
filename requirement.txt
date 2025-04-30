@@ -5,3 +5,5 @@ numexpr
 streamlit #for chatbot
 polars #for wizard solution
 openpyxl #for wizard solution
+uvicorn # deploy on app
+fastapi #deploy on app
