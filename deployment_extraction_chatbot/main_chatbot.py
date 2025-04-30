@@ -3,7 +3,7 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -11,50 +11,64 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from extract_parameters_func import extract_parameters, VALID_CRITERIA
 
+
+_sessions: Dict[str, Dict[str, Any]] = {}
+
+
 app = FastAPI()
-
-# 1) Add session middleware with a secret key
-app.add_middleware(SessionMiddleware, secret_key="YOUR_RANDOM_SECRET")
-
-# 2) CORS so your frontend can reach it
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # lock this down in production!
+    allow_origins=["*"],
     allow_methods=["POST", "OPTIONS", "GET"],
     allow_headers=["*"],
 )
 
 class ChatRequest(BaseModel):
+    session_id: str
     text: str
 
 class ChatResponse(BaseModel):
+    session_id: str
     extracted_parameters_value: Dict[str, Optional[Any]]
     generated_message: str
 
+# class SessionRequest(BaseModel):
+#     session_id: str
+
 @app.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest, request: Request):
-    # 3) Initialize a session ID (if new) so we can track per-user state
-    if "session_id" not in request.session:
-        request.session["session_id"] = str(uuid.uuid4())
-        # start with all-None parameters
-        request.session["params"] = {k: None for k in VALID_CRITERIA}
+async def chat(req: ChatRequest):
+    sid = req.session_id
 
-    # 4) Pull prior state
-    session_params: Dict[str, Any] = request.session["params"]
+    # 3a) initialize this session if it doesn't exist
+    if sid not in _sessions:
+        _sessions[sid] = {k: None for k in VALID_CRITERIA}
 
-    # 5) Extract new values and template message
+    # 3b) fetch the last‐seen params
+    session_params = _sessions[sid]
+
+    # 3c) extract new values and decide on a message
     new_params, msg = extract_parameters(req.text)
 
-    # 6) Overwrite only those keys where user just provided a non-None value
+    # 3d) overwrite only the keys the user just supplied
     for k, v in new_params.items():
         if v is not None:
             session_params[k] = v
 
-    # 7) Persist the updated state
-    request.session["params"] = session_params
+    # 3e) save back into our store
+    _sessions[sid] = session_params
 
-    # 8) Return the merged state + message
     return ChatResponse(
+        session_id=sid,
         extracted_parameters_value=session_params,
         generated_message=msg
     )
+
+
+# @app.get("/close_session")
+# @app.post("/close_session")
+# async def close_session(req: SessionRequest):
+#     sid = req.session_id
+#     if sid in _sessions:
+#         del _sessions[sid]
+#         return {"status": "session closed"}
+#     raise HTTPException(status_code=404, detail="session not found")
