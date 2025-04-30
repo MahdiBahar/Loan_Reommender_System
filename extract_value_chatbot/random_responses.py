@@ -37,6 +37,36 @@ TEMPLATES_INVALID = [
 ]
 
 
+TEMPLATES_LOAN_FIELD  = [
+    # Template 1
+    (
+        "در انتخاب وام مناسبِ شرایط شما می‌توانم کمک کنم. "
+        "برای این کار لطفاً مبلغ وام درخواستی، میزان سپرده، مدت سپرده، "
+        "تعداد اقساط و سایر جزئیات را ارسال کنید."
+    ),
+    # Template 2
+    (
+        "من می‌توانم با توجه به وضعیت شما، وام ایده‌آل را پیشنهاد دهم. "
+        "لطفاً اطلاعاتی مثل مبلغ وام، سپرده، دوره سپرده‌گذاری و تعداد قسط‌ها را در اختیارم بگذارید."
+    ),
+    # Template 3
+    (
+        "برای یافتن وامی که دقیقاً با شرایط شما سازگار است، همراهی شما را نیاز دارم. "
+        "لطفاً جزئیاتی مانند مبلغ وام مورد نظر، سپرده و مدت وام و تعداد اقساط را مطرح کنید."
+    ),
+    # Template 4
+    (
+        "اگر به من بگویید چه مقدار وام، چه میزان سپرده و چه مدت بازپرداخت نیاز دارید، "
+        "می‌توانم بهترین گزینه‌های وام را متناسب با شرایط شما پیشنهاد کنم."
+    ),
+    # Template 5
+    (
+        "برای ارائه مشاوره دقیق در مورد انتخاب وام مناسب شرایطتان، نیازمند اطلاعاتی مانند "
+        "مبلغ وام، میزان سپرده، طول دوره سپرده‌گذاری و تعداد اقساط هستم."
+    ),
+]
+
+
 def random_response_summary(summary: str) -> str:
     template = random.choice(TEMPLATES_SUMMARY)
     return template.format(summary=summary)
@@ -53,3 +83,7 @@ def random_irrelevant() -> str:
 def random_invalid(label: str) -> str:
     template = random.choice(TEMPLATES_INVALID)
     return template.format(label=label)
+
+def random_loan_field() -> str:
+    
+    return random.choice(TEMPLATES_LOAN_FIELD)

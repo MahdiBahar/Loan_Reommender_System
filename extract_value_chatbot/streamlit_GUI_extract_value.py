@@ -7,6 +7,7 @@ from random_responses import (
     random_invite,
     random_irrelevant,
     random_invalid,
+    random_loan_field,
 )
 
 # Validation criteria for each parameter
@@ -114,12 +115,11 @@ if prompt:
 
     other_keys = [k for k in new_params if k != "Loan_field"]
     if new_params.get("Loan_field") and all(new_params.get(k) is None for k in other_keys):
+        loan_field = random_loan_field()
         result_str = (
-                    "من در خصوص وام اینکه چه نوع وامی با توجه به شرایطت مناسبه میتونم کمک کنم. "
-                    "برای ان منظور نیاز دارم که اطلاعاتی مثل اینکه چه مقدار وام میخوای، "
-                    "میخوای چند درصد باشه و غیره."
+            f"{loan_field}\n\n"
         )
-
+    
     elif not any(v is not None for v in new_params.values()):
 
         apology = random_irrelevant()
