@@ -54,6 +54,18 @@ def _build_extraction_chain() -> LLMChain:
             '"Interest_rate":null'
             '"Loan_field":True'
             '}}\n\n'
+             "### Example 3\n"
+            "Input: \۳۰ تومن وام بده\"\n"
+            "Output:\n"
+            "{{"
+            '"deposit_amount":null,'
+            '"deposit_duration":null,'
+            '"loan_amount":30_000_000,'
+            '"repayment_duration":null,'
+            '"Credit_score":null,'
+            '"Interest_rate":null'
+            '"Loan_field":True'
+            '}}\n\n'
             "### Now process this input:\n"
             "Input: \"{user_input}\"\n"
             "Output:"

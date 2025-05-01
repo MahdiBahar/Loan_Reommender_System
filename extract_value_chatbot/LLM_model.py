@@ -9,7 +9,7 @@ import ast
 
 
 # Initialize the LLM (using Ollama in this example).
-llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434", temperature=0)
+llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434", temperature=1)
 #     "به عنوان مثال میتونی به این صورت جواب بدی که: من در خصوص وام اینکه چه نوع وامی با توجه به شرایطت مناسبه میتونم کمک کنم. برای ان منظور نیاز دارم که اطلاعاتی مثل اینکه چه مقدار وام میخوای، میخوای چند درصد باشه و غیره.\n\n"
 # Extraction prompt and chain
 def _build_extraction_chain() -> LLMChain:
@@ -49,6 +49,18 @@ def _build_extraction_chain() -> LLMChain:
             '"deposit_amount":40_000_000,'
             '"deposit_duration":null,'
             '"loan_amount":20_000_000,'
+            '"repayment_duration":null,'
+            '"Credit_score":null,'
+            '"Interest_rate":null'
+            '"Loan_field":True'
+            '}}\n\n'
+            "### Example 3\n"
+            "Input: \۳۰ تومن وام بده\"\n"
+            "Output:\n"
+            "{{"
+            '"deposit_amount":null,'
+            '"deposit_duration":null,'
+            '"loan_amount":30_000_000,'
             '"repayment_duration":null,'
             '"Credit_score":null,'
             '"Interest_rate":null'
