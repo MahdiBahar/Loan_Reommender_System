@@ -1,5 +1,6 @@
 # extract_parameters_func.py
 from typing import Any, Dict, Tuple
+from datetime import datetime, timedelta
 
 from LLM_parser_func import clean_and_parse
 from LLM_model import extract_chain
@@ -68,44 +69,45 @@ def format_params_message(params: Dict[str, Any]) -> str:
 extraction_chain = extract_chain()
 
 
-def extract_parameters(user_input: str) -> Tuple[Dict[str, Any], str]:
+def extract_parameters(
+    user_input: str,
+    prior_params: Dict[str, Any]
+) -> Tuple[Dict[str, Any], str]:
     """
-    Given raw text, extract parameter dict and decide on a response message.
-    Returns (new_params, generated_message).
+    Extract new parameter values from user_input, merge into prior_params,
+    and generate an appropriate response message.
     """
-    # Extraction step
+    # Try extraction
     try:
         raw = extraction_chain.predict(user_input=user_input)
         new_params = clean_and_parse(raw)
     except Exception:
-        # fallback to all None + irrelevant
+        # If parsing fails, return fallback
         fallback = {k: None for k in VALID_CRITERIA}
         return fallback, random_irrelevant()
 
-    # Decide which template to use
-    other_keys = [k for k in new_params if k != "Loan_field"]
-    if new_params.get("Loan_field") and all(new_params[k] is None for k in other_keys):
-        msg = random_loan_field()
+    # Determine template-based response and collect valid updates
+    valid_updates: Dict[str, Any] = {}
+    invalid_msgs = []
 
+    # Template logic for raw message
+    if new_params.get("Loan_field") and all(
+        new_params.get(k) is None for k in new_params if k != "Loan_field"
+    ):
+        raw_msg = random_loan_field()
     elif not any(v is not None for v in new_params.values()):
-        msg = random_irrelevant()
-
+        raw_msg = random_irrelevant()
     else:
-        invalid_msgs = []
-        valid_updates: Dict[str, Any] = {}
-
+        # Validate each extracted value
         for k, v in new_params.items():
             if k == "Loan_field" or v is None:
                 continue
-
             crit = VALID_CRITERIA[k]
             ok, hint = True, None
-
             if isinstance(crit, list) and v not in crit:
                 ok, hint = False, ", ".join(str(x) for x in crit if x is not None)
             if callable(crit) and not crit(v):
                 ok, hint = False, "کوچکتر یا مساوی 3000000000"
-
             if ok:
                 valid_updates[k] = v
             else:
@@ -113,12 +115,22 @@ def extract_parameters(user_input: str) -> Tuple[Dict[str, Any], str]:
                     random_invalid(LABELS[k])
                     + (f"\nراهنمایی: {hint}" if hint else "")
                 )
-
         if invalid_msgs:
-            msg = "\n".join(invalid_msgs)
+            raw_msg = "\n".join(invalid_msgs)
         else:
-            # update params and generate summary
-            new_params.update(valid_updates)
-            msg = random_response_summary(format_params_message(new_params))
+            raw_msg = random_response_summary(format_params_message(new_params))
 
-    return new_params, msg
+    # Merge prior state with valid updates
+    updated_params = prior_params.copy()
+    for k, v in valid_updates.items():
+        updated_params[k] = v
+
+    # If there were valid updates, build a custom summary of the full state
+    if valid_updates:
+        # summary = format_params_message(updated_params)
+        msg = random_response_summary(format_params_message(updated_params))
+    else:
+        # No updates: use the template-based reply
+        msg = raw_msg
+
+    return updated_params, msg

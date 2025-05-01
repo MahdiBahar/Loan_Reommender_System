@@ -1,28 +1,24 @@
 # main_chatbot.py
 
-import uuid
 from typing import Any, Dict, Optional
-
-from fastapi import FastAPI, Request , HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from starlette.middleware.sessions import SessionMiddleware
 
 from extract_parameters_func import extract_parameters, VALID_CRITERIA
-
-
-_sessions: Dict[str, Dict[str, Any]] = {}
-
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],       # restrict in prod
     allow_methods=["POST", "OPTIONS", "GET"],
     allow_headers=["*"],
 )
 
+# In-memory session store: session_id -> params dict
+_sessions: Dict[str, Dict[str, Any]] = {}
+
+# Request/response schemas
 class ChatRequest(BaseModel):
     session_id: str
     text: str
@@ -39,32 +35,24 @@ class SessionRequest(BaseModel):
 async def chat(req: ChatRequest):
     sid = req.session_id
 
-    # 3a) initialize this session if it doesn't exist
+    # Initialize session if it doesn't exist
     if sid not in _sessions:
         _sessions[sid] = {k: None for k in VALID_CRITERIA}
+    prior_params = _sessions[sid]
 
-    # 3b) fetch the last‐seen params
-    session_params = _sessions[sid]
+    # Extract parameters, merge into prior state, and build message
+    updated_params, msg = extract_parameters(req.text, prior_params)
 
-    # 3c) extract new values and decide on a message
-    new_params, msg = extract_parameters(req.text)
-
-    # 3d) overwrite only the keys the user just supplied
-    for k, v in new_params.items():
-        if v is not None:
-            session_params[k] = v
-
-    # 3e) save back into our store
-    _sessions[sid] = session_params
+    # Persist updated state
+    _sessions[sid] = updated_params
 
     return ChatResponse(
         session_id=sid,
-        extracted_parameters_value=session_params,
+        extracted_parameters_value=updated_params,
         generated_message=msg
     )
 
-
-@app.get("/close_session")
+# @app.get("/close_session")
 @app.post("/close_session")
 async def close_session(req: SessionRequest):
     sid = req.session_id
