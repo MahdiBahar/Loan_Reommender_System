@@ -16,7 +16,7 @@ from random_responses import (
 VALID_CRITERIA = {
     "deposit_amount": None,
     "deposit_duration": [1, 2, 3, 4, 6, 12],
-    "loan_amount": lambda x: x <= 3_000_000_000,
+    "loan_amount": lambda x: x <= 300_000_000,
     "Credit_score": ["A", "B", "C", "D", "E", None],
     "repayment_duration": [12, 24, 36, 48, 60],
     "Interest_rate": [4, 14, 18, 23],
@@ -77,14 +77,17 @@ def extract_parameters(
     Extract new parameter values from user_input, merge into prior_params,
     and generate an appropriate response message.
     """
+    rb = False
     # Try extraction
     try:
         raw = extraction_chain.predict(user_input=user_input)
         new_params = clean_and_parse(raw)
     except Exception:
         # If parsing fails, return fallback
-        fallback = {k: None for k in VALID_CRITERIA}
-        return fallback, random_irrelevant()
+        # fallback = {k: None for k in VALID_CRITERIA}
+        fallback = prior_params
+        rb = False
+        return fallback, random_irrelevant() , rb
 
     # Determine template-based response and collect valid updates
     valid_updates: Dict[str, Any] = {}
@@ -95,8 +98,10 @@ def extract_parameters(
         new_params.get(k) is None for k in new_params if k != "Loan_field"
     ):
         raw_msg = random_loan_field()
+        rb = False
     elif not any(v is not None for v in new_params.values()):
         raw_msg = random_irrelevant()
+        rb = False
     else:
         # Validate each extracted value
         for k, v in new_params.items():
@@ -107,7 +112,7 @@ def extract_parameters(
             if isinstance(crit, list) and v not in crit:
                 ok, hint = False, ", ".join(str(x) for x in crit if x is not None)
             if callable(crit) and not crit(v):
-                ok, hint = False, "کوچکتر یا مساوی 3000000000"
+                ok, hint = False, "مقدار وام،کوچکتر یا مساوی ۳۰۰ میلون تومن هست."
             if ok:
                 valid_updates[k] = v
             else:
@@ -117,8 +122,10 @@ def extract_parameters(
                 )
         if invalid_msgs:
             raw_msg = "\n".join(invalid_msgs)
+            rb = False
         else:
             raw_msg = random_response_summary(format_params_message(new_params))
+            rb = True
 
     # Merge prior state with valid updates
     updated_params = prior_params.copy()
@@ -129,8 +136,9 @@ def extract_parameters(
     if valid_updates:
         # summary = format_params_message(updated_params)
         msg = random_response_summary(format_params_message(updated_params))
+        rb = True
     else:
         # No updates: use the template-based reply
         msg = raw_msg
-
-    return updated_params, msg
+        rb = False
+    return updated_params, msg, rb

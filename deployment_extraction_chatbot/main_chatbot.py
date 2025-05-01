@@ -27,6 +27,7 @@ class ChatResponse(BaseModel):
     session_id: str
     extracted_parameters_value: Dict[str, Optional[Any]]
     generated_message: str
+    recom_button : bool = False
 
 class SessionRequest(BaseModel):
     session_id: str
@@ -41,7 +42,7 @@ async def chat(req: ChatRequest):
     prior_params = _sessions[sid]
 
     # Extract parameters, merge into prior state, and build message
-    updated_params, msg = extract_parameters(req.text, prior_params)
+    updated_params, msg, rb = extract_parameters(req.text, prior_params)
 
     # Persist updated state
     _sessions[sid] = updated_params
@@ -49,7 +50,8 @@ async def chat(req: ChatRequest):
     return ChatResponse(
         session_id=sid,
         extracted_parameters_value=updated_params,
-        generated_message=msg
+        generated_message=msg,
+        recom_button= rb
     )
 
 # @app.get("/close_session")
