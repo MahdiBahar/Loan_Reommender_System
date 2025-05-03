@@ -31,7 +31,7 @@ def _build_extraction_chain() -> LLMChain:
             "no underscores, commas, or % signs.\n"
             "- Loan_field (True or null) : اگر پرامپت ورود در حوزه وام یا تسهیلات است مقدار این پارامتر True میشود در غیر این صورت مقدارش null هست\n\n"
             "### Example 1\n"
-            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومن پول بخوابونم چقدره\"\n"
+            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومنی پول بخوابونم چقدره\"\n"
             "Output:\n"
             "{{"
             '"deposit_amount":60_000_000,'

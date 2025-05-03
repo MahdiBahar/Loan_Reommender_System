@@ -44,6 +44,10 @@ SUFFIXES = {
 }
 
 
+# Initialize chain once at import
+extraction_chain = extract_chain()
+
+
 def format_params_message(params: Dict[str, Any]) -> str:
     """
     Build a human-readable summary of all non-None parameters.
@@ -65,9 +69,6 @@ def format_params_message(params: Dict[str, Any]) -> str:
     return "\n".join(lines) + "\n\n" + random_invite()
 
 
-# 2) Initialize chain once at import
-extraction_chain = extract_chain()
-
 
 def extract_parameters(
     user_input: str,
@@ -77,7 +78,8 @@ def extract_parameters(
     Extract new parameter values from user_input, merge into prior_params,
     and generate an appropriate response message.
     """
-    rb = False
+    # rb = False
+    fallback = prior_params.copy()
     # Try extraction
     try:
         raw = extraction_chain.predict(user_input=user_input)
@@ -85,14 +87,13 @@ def extract_parameters(
     except Exception:
         # If parsing fails, return fallback
         # fallback = {k: None for k in VALID_CRITERIA}
-        fallback = prior_params
-        rb = False
-        return fallback, random_irrelevant() , rb
+        
+        return fallback, random_irrelevant() , False
 
     # Determine template-based response and collect valid updates
     valid_updates: Dict[str, Any] = {}
     invalid_msgs = []
-
+    invalid_keys = []
     # Template logic for raw message
     if new_params.get("Loan_field") and all(
         new_params.get(k) is None for k in new_params if k != "Loan_field"
@@ -116,26 +117,31 @@ def extract_parameters(
             if ok:
                 valid_updates[k] = v
             else:
+                invalid_keys.append(k)
                 invalid_msgs.append(
                     random_invalid(LABELS[k])
                     + (f"\nراهنمایی: {hint}" if hint else "")
                 )
-        if invalid_msgs:
-            raw_msg = "\n".join(invalid_msgs)
-            rb = False
-        else:
-            raw_msg = random_response_summary(format_params_message(new_params))
-            rb = True
 
-    # Merge prior state with valid updates
+          # Merge prior state with valid updates
     updated_params = prior_params.copy()
     for k, v in valid_updates.items():
         updated_params[k] = v
 
-    # If there were valid updates, build a custom summary of the full state
-    if valid_updates:
-        # summary = format_params_message(updated_params)
+        # Case: only invalid
+    if not valid_updates and invalid_keys:
+        msg = "\n".join(invalid_msgs)
+        rb = False
+
+        # Case: only valid
+    elif valid_updates and not invalid_keys:
         msg = random_response_summary(format_params_message(updated_params))
+        rb = True
+
+    elif valid_updates and invalid_keys:
+        raw_msg_invalid = "\n".join(invalid_msgs)
+        raw_msg_valid = random_response_summary(format_params_message(updated_params))
+        msg = f"{raw_msg_invalid}\n\n{raw_msg_valid}"
         rb = True
     else:
         # No updates: use the template-based reply

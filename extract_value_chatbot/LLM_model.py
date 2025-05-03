@@ -9,7 +9,7 @@ import ast
 
 
 # Initialize the LLM (using Ollama in this example).
-llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434", temperature=1)
+llm = Ollama(model="phi4:latest", base_url="http://127.0.0.1:11434", temperature=0)
 #     "به عنوان مثال میتونی به این صورت جواب بدی که: من در خصوص وام اینکه چه نوع وامی با توجه به شرایطت مناسبه میتونم کمک کنم. برای ان منظور نیاز دارم که اطلاعاتی مثل اینکه چه مقدار وام میخوای، میخوای چند درصد باشه و غیره.\n\n"
 # Extraction prompt and chain
 def _build_extraction_chain() -> LLMChain:
@@ -31,7 +31,7 @@ def _build_extraction_chain() -> LLMChain:
             "no underscores, commas, or % signs.\n"
             "- Loan_field (True or null) : اگر پرامپت ورود در حوزه وام یا تسهیلات است مقدار این پارامتر True میشود در غیر این صورت مقدارش null هست\n\n"
             "### Example 1\n"
-            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومن پول بخوابونم چقدره\"\n"
+            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومنی پول بخوابونم چقدره\"\n"
             "Output:\n"
             "{{"
             '"deposit_amount":60_000_000,'
