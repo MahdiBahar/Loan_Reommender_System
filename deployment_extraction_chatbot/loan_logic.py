@@ -13,10 +13,6 @@ _parameters_weights = _load_weights()
 
 
 def calculate_sort_order(loan: Dict[str, Any]) -> None:
-    """
-    Mutates loan by adding a 'sortOrder' key based on weighted criteria,
-    faithfully mirroring the JS logic.
-    """
     # Determine bucket
     loanAmountKey = 'out_of_range'
     la = loan.get('loan_amount', 0)
@@ -162,4 +158,4 @@ def query_complex(
                    (credit_score == 'N' and 'فاقد رتبه' in cs_field))
         if cond_da and cond_rd and cond_dep and cond_ir and cond_cs:
             matches.append(rec)
-    return sorted(matches, key=lambda x: x.get('sortOrder', 0), reverse=True)
+    return matches

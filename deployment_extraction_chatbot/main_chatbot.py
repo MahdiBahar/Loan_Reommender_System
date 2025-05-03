@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from extract_parameters_func import extract_parameters, VALID_CRITERIA
+from filter_sort import get_query_params , load_record
 
 app = FastAPI()
 app.add_middleware(
@@ -27,6 +28,7 @@ class ChatResponse(BaseModel):
     session_id: str
     extracted_parameters_value: Dict[str, Optional[Any]]
     generated_message: str
+    filter_results: str
     recom_button : bool = False
 
 class SessionRequest(BaseModel):
@@ -43,6 +45,17 @@ async def chat(req: ChatRequest):
 
     # Extract parameters, merge into prior state, and build message
     updated_params, msg, rb = extract_parameters(req.text, prior_params)
+    _records = load_record()
+    results , msg_filter = get_query_params(
+        _records,
+        deposit__amount=updated_params.get("Deposit_amount"),
+        repayment__duration=updated_params.get("Repayment_duration"),
+        deposit__duration=updated_params.get("Deposit_duration"),
+        interest__rate=updated_params.get("Interest_rate"),
+        credit__score=updated_params.get("Credit_score"),
+        loan__amount=updated_params.get("Loan_amount")
+    )
+
 
     # Persist updated state
     _sessions[sid] = updated_params
@@ -51,6 +64,7 @@ async def chat(req: ChatRequest):
         session_id=sid,
         extracted_parameters_value=updated_params,
         generated_message=msg,
+        filter_results=msg_filter,
         recom_button= rb
     )
 

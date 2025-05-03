@@ -5,11 +5,11 @@ import json
 from typing import List, Dict, Any, Optional
 
 # Load parameter weights once
-def _load_record() -> Dict[str, Any]:
+def load_record() -> Dict[str, Any]:
     with open('MEC-LoanRecomn_Scenarios-V15.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
-_records = _load_record()
+_records = load_record()
 
 
 
@@ -22,15 +22,8 @@ def get_query_params( _records,
     loan__amount: Optional[float] = None
 ):
 
-    if loan__amount:
-        scenarios = update_with_la(_records, loan__amount)
-    elif deposit__amount and loan__amount is None:
-        scenarios = update_with_da(_records, deposit__amount)
-    else:
-        scenarios = _records
-
     report = query_complex(
-        scenarios,
+        _records,
         deposit_amount=deposit__amount,
         repayment_duration=repayment__duration,
         deposit_duration=deposit__duration,
@@ -38,5 +31,15 @@ def get_query_params( _records,
         credit_score=credit__score
     )
 
-    return report
+    if loan__amount:
+        scenarios = update_with_la(report, loan__amount)
+    elif deposit__amount and loan__amount is None:
+        scenarios = update_with_da(report, deposit__amount)
+    else:
+        scenarios = report
+
+    
+    msg= f"تعداد {len(scenarios)} پیشنهاد برای شما پیدا شد.\n\n"
+
+    return scenarios, msg
 
