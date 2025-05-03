@@ -1,4 +1,4 @@
-from loan_logic import calculate_sort_order, update_with_da, update_with_la, query_complex
+from loan_logic import update_with_da, update_with_la, query_complex
 
 
 import json
@@ -13,16 +13,30 @@ _records = _load_record()
 
 
 
+def get_query_params( _records, 
+    deposit__amount: Optional[float] = None,
+    repayment__duration: Optional[int] = None,
+    deposit__duration: Optional[int] = None,
+    interest__rate: Optional[float] = None,
+    credit__score: Optional[str] = None,
+    loan__amount: Optional[float] = None
+):
 
-def filter_sort(_records, loan_amount=None, deposit_amount=None):
-
-    if loan_amount is not None:
-        updated_records = update_with_la(_records, loan_amount)
-
-    elif deposit_amount is not None:
-        updated_records = update_with_da(_records, deposit_amount)
+    if loan__amount:
+        scenarios = update_with_la(_records, loan__amount)
+    elif deposit__amount and loan__amount is None:
+        scenarios = update_with_da(_records, deposit__amount)
     else:
-        updated_records = _records
-    # Filter out records with None values
+        scenarios = _records
 
-    return updated_records
+    report = query_complex(
+        scenarios,
+        deposit_amount=deposit__amount,
+        repayment_duration=repayment__duration,
+        deposit_duration=deposit__duration,
+        interest_rate=interest__rate,
+        credit_score=credit__score
+    )
+
+    return report
+

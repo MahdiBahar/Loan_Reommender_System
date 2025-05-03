@@ -1,16 +1,5 @@
-# logic.py
-"""
-Python port of your loan suggestion logic from logic.js.
-Functions:
-  - update_with_la(records, la)
-  - update_with_da(records, da)
-  - query_complex(scenarios, deposit_amount=None, repayment_duration=None,
-                  deposit_duration=None, interest_rate=None, credit_score=None)
-  - calculate_sort_order(loan)
-
-Expect each record to be a dict with fields matching your JS schema.
-Requires a JSON file 'parameters_weights.json' in the same directory.
-"""
+import pandas as pd
+import re
 import json
 from typing import List, Dict, Any, Optional
 
@@ -22,43 +11,44 @@ def _load_weights() -> Dict[str, Any]:
 _parameters_weights = _load_weights()
 
 
+
 def calculate_sort_order(loan: Dict[str, Any]) -> None:
     """
-    Mutates loan by adding a 'sortOrder' key based on weighted criteria.
+    Mutates loan by adding a 'sortOrder' key based on weighted criteria,
+    faithfully mirroring the JS logic.
     """
-    # Determine loanAmountKey
+    # Determine bucket
+    loanAmountKey = 'out_of_range'
     la = loan.get('loan_amount', 0)
     if la <= 500_000_000:
-        bracket = '1-50'
+        loanAmountKey = '1-50'
     elif la <= 1_000_000_000:
-        bracket = '50-100'
+        loanAmountKey = '50-100'
     elif la <= 1_500_000_000:
-        bracket = '100-150'
+        loanAmountKey = '100-150'
     elif la <= 2_000_000_000:
-        bracket = '150-200'
+        loanAmountKey = '150-200'
     elif la <= 2_500_000_000:
-        bracket = '200-250'
+        loanAmountKey = '200-250'
     elif la <= 3_000_000_000:
-        bracket = '250-300'
-    else:
-        bracket = 'out_of_range'
+        loanAmountKey = '250-300'
 
     pw = _parameters_weights
-    # Extract individual scores
-    ir_str = str(loan.get('interest_rate'))
-    rd_str = str(loan.get('repayment_duration'))
-    dd_str = str(loan.get('deposit_duration'))
-    cs_val = (loan.get('credit_score') or '')
-    # pick first letter A-E or 'N'
-    cs_letter = next((c for c in cs_val if c in 'ABCDE'), 'N')
+    # Extract individual weights
+    ir_key = str(loan.get('interest_rate', ''))
+    rd_key = str(loan.get('repayment_duration', ''))
+    dd_key = str(loan.get('deposit_duration', ''))
+    # CS: first A-E or N
+    cs_match = re.search(r'[ABCDE]', loan.get('credit_score', '') or '')
+    cs_key = cs_match.group(0) if cs_match else 'N'
 
-    ir_value = pw['IR'][bracket].get(ir_str, 0)
-    rd_value = pw['RD'][bracket].get(rd_str, 0)
-    w_type_coef = pw['w_type'][bracket].get(loan.get('nickname', ''), 1)
-    dd_value = pw['DD'].get(dd_str, 0)
-    cs_value = pw['CS'].get(cs_letter, 0)
+    ir_value = pw['IR'][loanAmountKey].get(ir_key, 0)
+    rd_value = pw['RD'][loanAmountKey].get(rd_key, 0)
+    w_type_coef = pw['w_type'][loanAmountKey].get(loan.get('nickname', ''), 1)
+    dd_value = pw['DD'].get(dd_key, 0)
+    cs_value = pw['CS'].get(cs_key, 0)
 
-    # weight scores
+    # Global weights
     w = pw['w']
     coef = (
         ir_value * w['IR_score'] +
@@ -66,9 +56,12 @@ def calculate_sort_order(loan: Dict[str, Any]) -> None:
         dd_value * w['DD_score'] +
         cs_value * w['CS_score']
     )
-    w_business = pw.get('w_business', {}).get(loan.get('nickname', ''), 1)
-    sort_order = coef * w_type_coef * w_business
-    loan['sortOrder'] = sort_order
+    # Business weight
+    w_business = pw['w_business'].get(loan.get('nickname', ''), 1)
+    # Calculate final score
+    loan['sortOrder'] = coef * w_type_coef * w_business
+
+
 
 
 def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, Any]]:
@@ -99,8 +92,10 @@ def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, A
         la_lim = rec.get('loan_amount_limit', float('inf'))
         min_la = rec.get('minimum_loan_amount', 0)
         return min_la <= rec['loan_amount'] <= la_lim
+    valid_records = [r for r in records if valid(r)]
+    # return valid_records
+    return sorted(valid_records, key=lambda x: x.get('sortOrder', 0), reverse=True)
 
-    return [r for r in records if valid(r)]
 
 
 def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, Any]]:
@@ -133,7 +128,10 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
         min_la = rec.get('minimum_loan_amount', 0)
         return min_la <= rec['loan_amount'] <= la_lim
 
-    return [r for r in records if valid(r)]
+    valid_records = [r for r in records if valid(r)]
+    # Sort descending by sortOrder
+    return sorted(valid_records, key=lambda x: x.get('sortOrder', 0), reverse=True)
+
 
 
 def query_complex(
@@ -164,6 +162,4 @@ def query_complex(
                    (credit_score == 'N' and 'فاقد رتبه' in cs_field))
         if cond_da and cond_rd and cond_dep and cond_ir and cond_cs:
             matches.append(rec)
-    return matches
-
-
+    return sorted(matches, key=lambda x: x.get('sortOrder', 0), reverse=True)
