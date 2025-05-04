@@ -9,7 +9,7 @@ def load_record() -> Dict[str, Any]:
     with open('MEC-LoanRecomn_Scenarios-V15.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
-_records = load_record()
+# _records = load_record()
 
 
 
@@ -38,8 +38,10 @@ def get_query_params( _records,
         interest_rate=interest__rate,
         credit_score=credit__score
     )
-    
-    msg= f"تعداد {len(report)} پیشنهاد برای شما پیدا شد.\n\n"
 
-    return report, msg
+    
+
+    # msg= f"تعداد {len(report)} پیشنهاد وام برای شما پیدا شد.\n\n"
+    loan_number = len(report)
+    return report, loan_number
 

@@ -28,7 +28,7 @@ class ChatResponse(BaseModel):
     session_id: str
     extracted_parameters_value: Dict[str, Optional[Any]]
     generated_message: str
-    filter_results: str
+    filter_results: Dict
     recom_button : bool = False
 
 class SessionRequest(BaseModel):
@@ -44,18 +44,7 @@ async def chat(req: ChatRequest):
     prior_params = _sessions[sid]
 
     # Extract parameters, merge into prior state, and build message
-    updated_params, msg, rb = extract_parameters(req.text, prior_params)
-    _records = load_record()
-    results , msg_filter = get_query_params(
-        _records,
-        deposit__amount=updated_params.get("Deposit_amount"),
-        repayment__duration=updated_params.get("Repayment_duration"),
-        deposit__duration=updated_params.get("Deposit_duration"),
-        interest__rate=updated_params.get("Interest_rate"),
-        credit__score=updated_params.get("Credit_score"),
-        loan__amount=updated_params.get("Loan_amount")
-    )
-
+    updated_params, msg, rb , first_result = extract_parameters(req.text, prior_params)
 
     # Persist updated state
     _sessions[sid] = updated_params
@@ -64,7 +53,7 @@ async def chat(req: ChatRequest):
         session_id=sid,
         extracted_parameters_value=updated_params,
         generated_message=msg,
-        filter_results=msg_filter,
+        filter_results=first_result,
         recom_button= rb
     )
 

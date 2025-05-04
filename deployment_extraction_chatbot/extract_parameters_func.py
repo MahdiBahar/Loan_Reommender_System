@@ -11,6 +11,8 @@ from random_responses import (
     random_invalid,
     random_loan_field,
 )
+from filter_sort import get_query_params, load_record
+
 
 # 1) Validation rules, labels & suffixes
 VALID_CRITERIA = {
@@ -48,10 +50,11 @@ SUFFIXES = {
 extraction_chain = extract_chain()
 
 
-def format_params_message(params: Dict[str, Any]) -> str:
+def format_params_message(params: Dict[str, Any], loan_number) -> str:
     """
     Build a human-readable summary of all non-None parameters.
     """
+    msg_calc_loan_number = f"تعداد {loan_number} پیشنهاد وام برای شما پیدا شد.\n\n"
     lines = []
     for key in (
         "deposit_amount",
@@ -64,9 +67,15 @@ def format_params_message(params: Dict[str, Any]) -> str:
         val = params.get(key)
         if val is not None:
             lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
+
+    
+        # if loan_number == 0:
+        #     response = "متاسفانه باتوجه به اطلاعاتی که دادی، وامی برای شما پیدا نشد."
+        # else:
+        #     response = "\n".join(lines) + "\n\n"+ msg_calc_loan_number+"\n\n" + random_invite()
     if not lines:
         return "هنوز مقادیری دریافت نکردم."
-    return "\n".join(lines) + "\n\n" + random_invite()
+    return "\n".join(lines) + "\n\n"+ msg_calc_loan_number+"\n\n" + random_invite()
 
 
 
@@ -135,16 +144,69 @@ def extract_parameters(
 
         # Case: only valid
     elif valid_updates and not invalid_keys:
-        msg = random_response_summary(format_params_message(updated_params))
-        rb = True
+        first_result, loan_number = param_values_chat(updated_params)
+        if loan_number == 0:
+            msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            rb =True
+        else:
+            msg = random_response_summary(format_params_message(updated_params,loan_number))
+            rb = True
 
     elif valid_updates and invalid_keys:
         raw_msg_invalid = "\n".join(invalid_msgs)
-        raw_msg_valid = random_response_summary(format_params_message(updated_params))
-        msg = f"{raw_msg_invalid}\n\n{raw_msg_valid}"
-        rb = True
+        first_result, loan_number = param_values_chat(updated_params)
+        if loan_number == 0:
+            msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            rb =True
+        else:
+            # Generate a summary message for valid updates
+            raw_msg_valid = random_response_summary(format_params_message(updated_params,loan_number))
+            msg = f"{raw_msg_invalid}\n\n{raw_msg_valid}"
+            rb = True
     else:
         # No updates: use the template-based reply
         msg = raw_msg
         rb = False
-    return updated_params, msg, rb
+    return updated_params, msg, rb , first_result
+
+
+def param_values_chat(updated_params: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    
+    # Safely extract values, defaulting to 0 or None
+
+    if updated_params.get("deposit_amount") is not None:
+
+        deposit_amount     = (updated_params.get("deposit_amount")) * 10
+
+    else: 
+        deposit_amount = None
+
+
+    if updated_params.get("loan_amount") is not None:
+        loan_amount        = (updated_params.get("loan_amount")) * 10
+    else:
+        loan_amount = None
+
+    repayment_duration =  updated_params.get("repayment_duration") 
+    deposit_duration   =  updated_params.get("deposit_duration")  
+    interest_rate      = updated_params.get("Interest_rate") 
+    credit_score       =  updated_params.get("Credit_score") 
+
+    # Load records and perform query
+    _records = load_record()
+    results, loan_num = get_query_params(
+        _records,
+        deposit_amount,
+        repayment_duration,
+        deposit_duration,
+        interest_rate,
+        credit_score,
+        loan_amount,
+    )
+
+    # If no matching loans, return empty/default
+    if not results:
+        return {}, 0
+
+    # Return first matching loan and the total number
+    return results[0], loan_num
