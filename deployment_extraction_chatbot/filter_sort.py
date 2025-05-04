@@ -20,26 +20,26 @@ def get_query_params( _records,
     interest__rate: Optional[float] = None,
     credit__score: Optional[str] = None,
     loan__amount: Optional[float] = None
-):
+) -> List[Dict[str, Any]]:   #Input values are Toman
+
+
+    if loan__amount:
+        scenarios = update_with_la(_records, loan__amount)
+    elif deposit__amount and loan__amount is None:
+        scenarios = update_with_da(_records, deposit__amount)
+    else:
+        scenarios = _records
 
     report = query_complex(
-        _records,
+        scenarios,
         deposit_amount=deposit__amount,
         repayment_duration=repayment__duration,
         deposit_duration=deposit__duration,
         interest_rate=interest__rate,
         credit_score=credit__score
     )
-
-    if loan__amount:
-        scenarios = update_with_la(report, loan__amount)
-    elif deposit__amount and loan__amount is None:
-        scenarios = update_with_da(report, deposit__amount)
-    else:
-        scenarios = report
-
     
-    msg= f"تعداد {len(scenarios)} پیشنهاد برای شما پیدا شد.\n\n"
+    msg= f"تعداد {len(report)} پیشنهاد برای شما پیدا شد.\n\n"
 
-    return scenarios, msg
+    return report, msg
 
