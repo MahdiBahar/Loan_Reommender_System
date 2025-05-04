@@ -60,6 +60,7 @@ def calculate_sort_order(loan: Dict[str, Any]) -> None:
 
 
 
+
 def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, Any]]:
     """
     Given desired loan amount 'la', update each record's
@@ -73,7 +74,7 @@ def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, A
         num = la * ir_monthly * (1 + ir_monthly) ** r
         den = (1 + ir_monthly) ** r - 1
         rec['loan_amount'] = la
-        rec['monthly_repayment'] = num / den / 10  # change to Toman
+        rec['monthly_repayment'] = num / den   # change to Rial
         rec['deposit_amount'] = (la / rec.get('loan_coefficient', 1)) * 100
         calculate_sort_order(rec)
 
@@ -81,17 +82,16 @@ def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, A
         max_dep = rec.get('maximum_deposit_amount')
         if max_dep and max_dep.lower() != 'nan':
             try:
-                if rec['deposit_amount'] > int(max_dep):
+                if rec.get('deposit_amount') > int(max_dep):
                     return False
             except ValueError:
                 pass
         la_lim = rec.get('loan_amount_limit', float('inf'))
         min_la = rec.get('minimum_loan_amount', 0)
-        return min_la <= rec['loan_amount'] <= la_lim
+        return min_la <= rec.get('loan_amount') <= la_lim
     valid_records = [r for r in records if valid(r)]
     # return valid_records
     return sorted(valid_records, key=lambda x: x.get('sortOrder', 0), reverse=True)
-
 
 
 def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, Any]]:
@@ -108,7 +108,7 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
         num = la * ir_monthly * (1 + ir_monthly) ** r
         den = (1 + ir_monthly) ** r - 1
         rec['loan_amount'] = la
-        rec['monthly_repayment'] = num / den / 10
+        rec['monthly_repayment'] = num / den  # change to Rial
         rec['deposit_amount'] = da
         calculate_sort_order(rec)
 
@@ -116,13 +116,13 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
         max_dep = rec.get('maximum_deposit_amount')
         if max_dep and max_dep.lower() != 'nan':
             try:
-                if rec['deposit_amount'] > int(max_dep):
+                if rec.get('deposit_amount') > int(max_dep):
                     return False
             except ValueError:
                 pass
         la_lim = rec.get('loan_amount_limit', float('inf'))
         min_la = rec.get('minimum_loan_amount', 0)
-        return min_la <= rec['loan_amount'] <= la_lim
+        return min_la <= rec.get('loan_amount') <= la_lim
 
     valid_records = [r for r in records if valid(r)]
     # Sort descending by sortOrder
@@ -145,7 +145,7 @@ def query_complex(
     for rec in scenarios:
         # deposit range: up to 1.6x
         cond_da = (deposit_amount is None or
-                   rec.get('deposit_amount', 0) <= deposit_amount * 10_000_000 * 1.6)
+                   rec.get('deposit_amount', 0) <= deposit_amount * 1.6)
         cond_rd = (repayment_duration is None or
                    rec.get('repayment_duration') == repayment_duration)
         cond_dep = (deposit_duration is None or
@@ -158,4 +158,5 @@ def query_complex(
                    (credit_score == 'N' and 'فاقد رتبه' in cs_field))
         if cond_da and cond_rd and cond_dep and cond_ir and cond_cs:
             matches.append(rec)
-    return matches
+    return sorted(matches, key=lambda x: x.get('sortOrder', 0), reverse=True)
+
