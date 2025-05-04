@@ -83,11 +83,9 @@ def extract_parameters(
     user_input: str,
     prior_params: Dict[str, Any]
 ) -> Tuple[Dict[str, Any], str]:
-    """
-    Extract new parameter values from user_input, merge into prior_params,
-    and generate an appropriate response message.
-    """
+    
     # rb = False
+    first_result = {}
     fallback = prior_params.copy()
     # Try extraction
     try:
@@ -97,7 +95,7 @@ def extract_parameters(
         # If parsing fails, return fallback
         # fallback = {k: None for k in VALID_CRITERIA}
         
-        return fallback, random_irrelevant() , False
+        return fallback, random_irrelevant() , False, {}
 
     # Determine template-based response and collect valid updates
     valid_updates: Dict[str, Any] = {}

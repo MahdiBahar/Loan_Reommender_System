@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from extract_parameters_func import extract_parameters, VALID_CRITERIA
-from filter_sort import get_query_params , load_record
+# from filter_sort import get_query_params , load_record
 
 app = FastAPI()
 app.add_middleware(
