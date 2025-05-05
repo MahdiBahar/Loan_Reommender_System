@@ -17,10 +17,10 @@ def _build_extraction_chain() -> LLMChain:
         input_variables=["user_input"],
         template=(
            "Do not think. Do not output any reasoning—output **only** the JSON or the advisor message.\n\n"
-        "If the user_input contains the words 'وام' or 'تسهیلات' but does not contain any numeric values for deposit_amount, loan_amount, deposit_duration, repayment_duration, Credit_score, or Interest_rate, then make the loan_field parameters True\n"
-   
+        "If the user_input contains the words 'وام' or 'تسهیلات' but does not contain any numeric values for deposit_amount, loan_amount, deposit_duration, repayment_duration, Credit_score, or Interest_rate, then make the loan_field parameter True\n"
+        "If the user_input contains the words like  'سلام' or 'خوبی' or 'چطوری' but does not contain any numeric values for deposit_amount, loan_amount, deposit_duration, repayment_duration, Credit_score, or Interest_rate, then make the hello_msg parameter True \n"
         "Otherwise, extract exactly these fields as JSON (no markdown, no fences):\n"
-            "- deposit_amount (float or null) : مقدار سپرده یا میانگین سپرده یا میزان پولی که کاربر دارد \n"
+            "- deposit_amount (float or null) :  مقدار سپرده یا میانگین سپرده یا میزان پولی که کاربر دارد یا میخواد بخواباند \n"
             "- loan_amount (float or null) : مقدار وامی که کاربر میخواهد یا به او تعلق میگیرد\n"
             "- deposit_duration (integer months or null) : مدت زمانی که پول یا سپرده مشتری در حساب بانکی باید باشد یا میخواهد باش یا در حسابش بخواباند\n"
             "- repayment_duration (integer months or null) : مدت زمان بازپرداخت وام یا تعداد اقساط\n"
@@ -30,20 +30,23 @@ def _build_extraction_chain() -> LLMChain:
             "If missing, set its value to `null`. Numbers must be plain digits (e.g. 25000000),\n"
             "no underscores, commas, or % signs.\n"
             "- Loan_field (True or null) : اگر پرامپت ورود در حوزه وام یا تسهیلات است مقدار این پارامتر True میشود در غیر این صورت مقدارش null هست\n\n"
+            "- hello_msg (True or null) : این پارامتر برای زمانی است که کاربر احوال پرسی انجام میدهد (مثلا می گوید سلام) و در پاسخ این پارامتر True میشود، در غیر این صورت null هست\n\n"
+            
             "### Example 1\n"
-            "Input: \"من میخوام ببینم سود سپرده بانک اگه ۶۰ تومنی پول بخوابونم چقدره\"\n"
+            "Input: \"من اگه ۲۰ میلیون  پول رو ۳ ماه تو حسابم بخوابونم چقدر بهم وام 14 درصد میدی\"\n"
             "Output:\n"
             "{{"
-            '"deposit_amount":60_000_000,'
-            '"deposit_duration":null,'
+            '"deposit_amount":20_000_000,'
+            '"deposit_duration":3,'
             '"loan_amount":null,'
             '"repayment_duration":null,'
             '"Credit_score":null,'
-            '"Interest_rate":null'
-            '"Loan_field":True'
+            '"Interest_rate":14,'
+            '"Loan_field":True,'
+            '"hello_msg" : null'
             '}}\n\n'
             "### Example 2\n"
-            "Input: \یه وام ۲۰ میلیونی میخوام. با چهل میلیون سپرده چقدر وام بهم تعلق میگیره؟\"\n"
+            "Input: \سلام. خوبی؟ یه وام ۲۰ میلیونی میخوام. با چهل میلیون سپرده چقدر وام بهم تعلق میگیره؟\"\n"
             "Output:\n"
             "{{"
             '"deposit_amount":40_000_000,'
@@ -51,10 +54,12 @@ def _build_extraction_chain() -> LLMChain:
             '"loan_amount":20_000_000,'
             '"repayment_duration":null,'
             '"Credit_score":null,'
-            '"Interest_rate":null'
-            '"Loan_field":True'
+            '"Interest_rate":null,'
+            '"Loan_field":True,'
+            '"hello_msg" : True'
+
             '}}\n\n'
-             "### Example 3\n"
+            "### Example 3\n"
             "Input: \۳۰ تومن وام بده\"\n"
             "Output:\n"
             "{{"
@@ -63,9 +68,11 @@ def _build_extraction_chain() -> LLMChain:
             '"loan_amount":30_000_000,'
             '"repayment_duration":null,'
             '"Credit_score":null,'
-            '"Interest_rate":null'
-            '"Loan_field":True'
+            '"Interest_rate":null,'
+            '"Loan_field":True,'
+            '"hello_msg" : null'
             '}}\n\n'
+
             "### Now process this input:\n"
             "Input: \"{user_input}\"\n"
             "Output:"

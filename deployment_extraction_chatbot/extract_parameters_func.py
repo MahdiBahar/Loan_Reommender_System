@@ -23,6 +23,7 @@ VALID_CRITERIA = {
     "repayment_duration": [12, 24, 36, 48, 60],
     "Interest_rate": [4, 14, 18, 23],
     "Loan_field": None,
+    "hello_msg" : None
 }
 
 LABELS = {
@@ -33,6 +34,7 @@ LABELS = {
     "Credit_score": "رتبه اعتباری",
     "Interest_rate": "نرخ سود",
     "Loan_field": "",
+    "hello_msg" : ""
 }
 
 SUFFIXES = {
@@ -43,6 +45,7 @@ SUFFIXES = {
     "Credit_score": "",
     "Interest_rate": " درصد",
     "Loan_field": "",
+    "hello_msg" : ""
 }
 
 
@@ -120,6 +123,22 @@ def extract_parameters(
         # raw_msg = random_loan_field()
         msg_list_param.append(random_loan_field())
         rb = False
+
+    elif new_params.get("hello_msg") and all(
+        new_params.get(k) is None for k in new_params if k != "hello_msg"  
+    ):
+        msg_response_hi = "چه کمکی در زمینه تسهیلات و وام از من برمیاد؟"
+        msg_list_param.append(msg_response_hi)
+        rb = False
+
+    elif new_params.get("Loan_field") and new_params.get("hello_msg") and all(
+        new_params.get(k) is None for k in new_params if k != "Loan_field" and k != "hello_msg"
+    ):
+        msg_response_hi = "چه کمکی در زمینه تسهیلات و وام از من برمیاد؟"
+        msg_list_param.append(msg_response_hi)
+        msg_list_param.append(random_loan_field())
+        rb = False
+
     elif not any(v is not None for v in new_params.values()):
         # raw_msg = random_irrelevant()
         msg_list_param.append(random_irrelevant())
@@ -128,6 +147,8 @@ def extract_parameters(
         # Validate each extracted value
         for k, v in new_params.items():
             if k == "Loan_field" or v is None:
+                continue
+            elif k == "hello_msg" or v is None:
                 continue
             crit = VALID_CRITERIA[k]
             ok, hint = True, None
@@ -159,8 +180,11 @@ def extract_parameters(
     elif valid_updates and not invalid_keys:
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
+            msg_list_param.append(random_response_summary())
+            msg_list_param.extend (format_params_message(updated_params,loan_number))
             msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
             msg_list_param.append(msg)
+            msg_list_param.append(random_invite())
             rb =True
         else:
             # msg = random_response_summary()
@@ -175,8 +199,11 @@ def extract_parameters(
         # msg_list_param.append(raw_msg_invalid)
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
+            msg_list_param.append(random_response_summary())
+            msg_list_param.extend (format_params_message(updated_params,loan_number))
             # msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
             msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
+            msg_list_param.append(random_invite())
             rb =True
         else:
             # Generate a summary message for valid updates
