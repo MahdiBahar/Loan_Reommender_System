@@ -1,12 +1,19 @@
 import random
 
 # 1) Loan-summary templates
+# TEMPLATES_SUMMARY = [
+#     "بسیار خب، طبق اطلاعاتی که بهم دادی:\n{summary}",
+#     "خب، تا اینجا که با هم صحبت کردیم:\n{summary}",
+#     " تا اینجا، این مقادیر در خصوص وام استخراج شد:\n{summary}",
+#     "طبق چتی که تا الان داشتیم، این نتایج در خصوص مقادیر مدنظر برای وام، به دست آمد:\n{summary}",
+#     "این هم خلاصه‌ای از مقادیر مدنظر شماست:\n{summary}",
+# ]
 TEMPLATES_SUMMARY = [
-    "بسیار خب، طبق اطلاعاتی که بهم دادی:\n{summary}",
-    "خب، تا اینجا که با هم صحبت کردیم:\n{summary}",
-    " تا اینجا، این مقادیر در خصوص وام استخراج شد:\n{summary}",
-    "طبق چتی که تا الان داشتیم، این نتایج در خصوص مقادیر مدنظر برای وام، به دست آمد:\n{summary}",
-    "این هم خلاصه‌ای از مقادیر مدنظر شماست:\n{summary}",
+    "بسیار خب، طبق اطلاعاتی که بهم دادی:",
+    "خب، تا اینجا که با هم صحبت کردیم:",
+    " تا اینجا، این مقادیر در خصوص وام استخراج شد:",
+    "طبق چتی که تا الان داشتیم، این نتایج در خصوص مقادیر مدنظر برای وام، به دست آمد:",
+    "این هم خلاصه‌ای از مقادیر مدنظر شماست:",
 ]
 
 # 2) Navigator-invite templates
@@ -29,10 +36,10 @@ TEMPLATES_IRRELEVANT = [
 
 # 4) Invalid-parameter templates (use {label})
 TEMPLATES_INVALID = [
-    "ببین مقداری که برای {label} وارد کردی در محدوده‌ی مجاز ما قرار نداره.",
-    "متأسفم، مقدار {label} که فرستادی مجاز نیست. لطفاً اصلاحش کن.",
+    "ببین مقداری که الان برای {label} وارد کردی در محدوده‌ی مجاز ما قرار نداره.",
+    "متأسفم، مقدار {label} که الان فرستادی مجاز نیست. لطفاً اصلاحش کن.",
     "ببین محدوده‌ی معتبر تعریف شده برای {label} متفاوت هست. لطفاً مقدار درست را وارد کن.",
-    "ببین مقداری که برای {label} دادی اشتباه هست، ممنون می‌شم اصلاحش کنی.",
+    "ببین مقداری که الان برای {label} دادی اشتباه هست، ممنون می‌شم اصلاحش کنی.",
     "لطفاً مقدار {label} را در بازه‌ی مجاز وارد کن؛ مقدار فعلی قابل پذیرش نیست.",
 ]
 
@@ -67,9 +74,13 @@ TEMPLATES_LOAN_FIELD  = [
 ]
 
 
-def random_response_summary(summary: str) -> str:
-    template = random.choice(TEMPLATES_SUMMARY)
-    return template.format(summary=summary)
+# def random_response_summary(summary: str) -> str:
+#     template = random.choice(TEMPLATES_SUMMARY)
+#     return template.format(summary=summary)
+
+def random_response_summary() -> str:
+    return random.choice(TEMPLATES_SUMMARY)
+
 
 
 def random_invite() -> str:

@@ -27,14 +27,14 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     session_id: str
     extracted_parameters_value: Dict[str, Optional[Any]]
-    generated_message: str
+    generated_message: list
     filter_results: Dict
     recom_button : bool = False
 
 class SessionRequest(BaseModel):
     session_id: str
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chatbot", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     sid = req.session_id
 

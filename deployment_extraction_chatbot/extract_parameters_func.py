@@ -54,7 +54,7 @@ def format_params_message(params: Dict[str, Any], loan_number) -> str:
     """
     Build a human-readable summary of all non-None parameters.
     """
-    msg_calc_loan_number = f"تعداد {loan_number} پیشنهاد وام برای شما پیدا شد.\n\n"
+    msg_calc_loan_number = f"تعداد {loan_number} پیشنهاد وام برای شما پیدا شد."
     lines = []
     for key in (
         "deposit_amount",
@@ -67,15 +67,25 @@ def format_params_message(params: Dict[str, Any], loan_number) -> str:
         val = params.get(key)
         if val is not None:
             lines.append(f" {LABELS[key]}: {val}{SUFFIXES[key]}")
-
+        # msg_list_param.append(".join(lines)")
+        # msg_list_param.append(msg_calc_loan_number)
+        # msg_list_param.append(random_invite())
     
         # if loan_number == 0:
         #     response = "متاسفانه باتوجه به اطلاعاتی که دادی، وامی برای شما پیدا نشد."
         # else:
         #     response = "\n".join(lines) + "\n\n"+ msg_calc_loan_number+"\n\n" + random_invite()
+
+
+
+
     if not lines:
-        return "هنوز مقادیری دریافت نکردم."
-    return "\n".join(lines) + "\n\n"+ msg_calc_loan_number+"\n\n" + random_invite()
+        lines.append("هنوز مقادیری دریافت نکردم.")
+        
+    else:
+        lines.append(msg_calc_loan_number)
+        # lines.append(random_invite())
+    return lines
 
 
 
@@ -87,6 +97,7 @@ def extract_parameters(
     # rb = False
     first_result = {}
     fallback = prior_params.copy()
+    msg_list_param = []
     # Try extraction
     try:
         raw = extraction_chain.predict(user_input=user_input)
@@ -94,8 +105,9 @@ def extract_parameters(
     except Exception:
         # If parsing fails, return fallback
         # fallback = {k: None for k in VALID_CRITERIA}
+        msg_list_param.append(random_irrelevant())
         
-        return fallback, random_irrelevant() , False, {}
+        return fallback, msg_list_param , False, {}
 
     # Determine template-based response and collect valid updates
     valid_updates: Dict[str, Any] = {}
@@ -105,10 +117,12 @@ def extract_parameters(
     if new_params.get("Loan_field") and all(
         new_params.get(k) is None for k in new_params if k != "Loan_field"
     ):
-        raw_msg = random_loan_field()
+        # raw_msg = random_loan_field()
+        msg_list_param.append(random_loan_field())
         rb = False
     elif not any(v is not None for v in new_params.values()):
-        raw_msg = random_irrelevant()
+        # raw_msg = random_irrelevant()
+        msg_list_param.append(random_irrelevant())
         rb = False
     else:
         # Validate each extracted value
@@ -120,14 +134,14 @@ def extract_parameters(
             if isinstance(crit, list) and v not in crit:
                 ok, hint = False, ", ".join(str(x) for x in crit if x is not None)
             if callable(crit) and not crit(v):
-                ok, hint = False, "مقدار وام،کوچکتر یا مساوی ۳۰۰ میلون تومن هست."
+                ok, hint = False, " حداکثر مقدار وام، ۳۰۰ میلیون تومان هست."
             if ok:
                 valid_updates[k] = v
             else:
                 invalid_keys.append(k)
                 invalid_msgs.append(
                     random_invalid(LABELS[k])
-                    + (f"\nراهنمایی: {hint}" if hint else "")
+                    + (f"( راهنمایی : مقادیر مجاز  {hint} هستند.)" if hint else "")
                 )
 
           # Merge prior state with valid updates
@@ -137,7 +151,8 @@ def extract_parameters(
 
         # Case: only invalid
     if not valid_updates and invalid_keys:
-        msg = "\n".join(invalid_msgs)
+        # msg = "\n".join(invalid_msgs)
+        msg_list_param.extend(invalid_msgs)
         rb = False
 
         # Case: only valid
@@ -145,27 +160,43 @@ def extract_parameters(
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
             msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            msg_list_param.append(msg)
             rb =True
         else:
-            msg = random_response_summary(format_params_message(updated_params,loan_number))
+            # msg = random_response_summary()
+            # msg = format_params_message(updated_params,loan_number)
+            msg_list_param.append(random_response_summary())
+            msg_list_param.extend (format_params_message(updated_params,loan_number))
+            msg_list_param.append(random_invite())
             rb = True
 
     elif valid_updates and invalid_keys:
-        raw_msg_invalid = "\n".join(invalid_msgs)
+        # raw_msg_invalid = "\n".join(invalid_msgs)
+        # msg_list_param.append(raw_msg_invalid)
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
-            msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            # msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
             rb =True
         else:
             # Generate a summary message for valid updates
-            raw_msg_valid = random_response_summary(format_params_message(updated_params,loan_number))
-            msg = f"{raw_msg_invalid}\n\n{raw_msg_valid}"
+            # raw_msg_valid = random_response_summary(format_params_message(updated_params,loan_number))
+            
+            # msg = f"{raw_msg_invalid}\n\n{raw_msg_valid}"
+            msg_list_param.extend(invalid_msgs)
+            msg_list_param.append(random_response_summary())
+            msg_list_param.extend(format_params_message(updated_params,loan_number))
+            msg_list_param.append(random_invite())
+
+            # msg_list_param.append(raw_msg_valid)
+            
             rb = True
     else:
         # No updates: use the template-based reply
-        msg = raw_msg
+        # msg = raw_msg
+        # msg_list_param.append(msg)
         rb = False
-    return updated_params, msg, rb , first_result
+    return updated_params, msg_list_param, rb , first_result
 
 
 def param_values_chat(updated_params: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
