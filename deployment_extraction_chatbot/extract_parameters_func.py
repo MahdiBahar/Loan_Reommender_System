@@ -49,8 +49,8 @@ SUFFIXES = {
 }
 
 
-# Initialize chain once at import
-extraction_chain = extract_chain()
+# # Initialize chain once at import
+# extraction_chain = extract_chain()
 
 
 def format_params_message(params: Dict[str, Any], loan_number) -> str:
@@ -94,7 +94,7 @@ def format_params_message(params: Dict[str, Any], loan_number) -> str:
 
 def extract_parameters(
     user_input: str,
-    prior_params: Dict[str, Any]
+    prior_params: Dict[str, Any], new_params
 ) -> Tuple[Dict[str, Any], str]:
     
     # rb = False
@@ -103,8 +103,9 @@ def extract_parameters(
     msg_list_param = []
     # Try extraction
     try:
-        raw = extraction_chain.predict(user_input=user_input)
-        new_params = clean_and_parse(raw)
+        # raw = extraction_chain.predict(user_input=user_input)
+        # new_params = clean_and_parse(raw)
+        new_params = new_params
     except Exception:
         # If parsing fails, return fallback
         # fallback = {k: None for k in VALID_CRITERIA}
@@ -127,15 +128,15 @@ def extract_parameters(
     elif new_params.get("hello_msg") and all(
         new_params.get(k) is None for k in new_params if k != "hello_msg"  
     ):
-        msg_response_hi = "چه کمکی در زمینه تسهیلات و وام از من برمیاد؟"
+        msg_response_hi = "چه کمکی در زمینه وام از من برمیاد که برات انجام بدم؟"
         msg_list_param.append(msg_response_hi)
         rb = False
 
     elif new_params.get("Loan_field") and new_params.get("hello_msg") and all(
         new_params.get(k) is None for k in new_params if k != "Loan_field" and k != "hello_msg"
     ):
-        msg_response_hi = "چه کمکی در زمینه تسهیلات و وام از من برمیاد؟"
-        msg_list_param.append(msg_response_hi)
+        # msg_response_hi = "چه کمکی در زمینه وام از من برمیاد که برات انجام بدم؟"
+        # msg_list_param.append(msg_response_hi)
         msg_list_param.append(random_loan_field())
         rb = False
 
@@ -162,7 +163,7 @@ def extract_parameters(
                 invalid_keys.append(k)
                 invalid_msgs.append(
                     random_invalid(LABELS[k])
-                    + (f"( راهنمایی : مقادیر مجاز  {hint} هستند.)" if hint else "")
+                    + (f"( راهنمایی : مقادیر مجاز  {hint}.)" if hint else "")
                 )
 
           # Merge prior state with valid updates
@@ -184,7 +185,7 @@ def extract_parameters(
             msg_list_param.extend (format_params_message(updated_params,loan_number))
             msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
             msg_list_param.append(msg)
-            msg_list_param.append(random_invite())
+            # msg_list_param.append(random_invite())
             rb =True
         else:
             # msg = random_response_summary()
@@ -203,7 +204,7 @@ def extract_parameters(
             msg_list_param.extend (format_params_message(updated_params,loan_number))
             # msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
             msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
-            msg_list_param.append(random_invite())
+            # msg_list_param.append(random_invite())
             rb =True
         else:
             # Generate a summary message for valid updates
