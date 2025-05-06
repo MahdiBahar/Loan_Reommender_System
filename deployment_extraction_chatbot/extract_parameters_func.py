@@ -10,6 +10,7 @@ from random_responses import (
     random_irrelevant,
     random_invalid,
     random_loan_field,
+    random_hello,
 )
 from filter_sort import get_query_params, load_record
 
@@ -128,7 +129,8 @@ def extract_parameters(
     elif new_params.get("hello_msg") and all(
         new_params.get(k) is None for k in new_params if k != "hello_msg"  
     ):
-        msg_response_hi = "چه کمکی در زمینه وام از من برمیاد که برات انجام بدم؟"
+        # msg_response_hi = "چه کمکی در زمینه وام از من برمیاد که برات انجام بدم؟"
+        msg_response_hi = random_hello()
         msg_list_param.append(msg_response_hi)
         rb = False
 
