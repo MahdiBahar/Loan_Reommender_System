@@ -182,32 +182,57 @@ def extract_parameters(
         # Case: only valid
     elif valid_updates and not invalid_keys:
         first_result, loan_number = param_values_chat(updated_params)
+    
         if loan_number == 0:
             msg_list_param.append(random_response_summary())
             msg_list_param.extend (format_params_message(updated_params,loan_number))
-            msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
-            msg_list_param.append(msg)
+            # msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
+            # msg_list_param.append(msg)
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_amount" or k == "loan_amount"):
+                msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را مجدد تغییر بدی."
+                msg_list_param.append(msg)
+                msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
+                rb =False
+            else:
+                msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری."
+                msg_list_param.append(msg)
+                rb =True
             # msg_list_param.append(random_invite())
-            rb =True
+            
         else:
             # msg = random_response_summary()
             # msg = format_params_message(updated_params,loan_number)
             msg_list_param.append(random_response_summary())
             msg_list_param.extend (format_params_message(updated_params,loan_number))
-            msg_list_param.append(random_invite())
-            rb = True
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_amount" or k == "loan_amount"):
+                msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
+                rb =False
+            else:
+                msg_list_param.append(random_invite())
+                rb = True
 
+
+            
     elif valid_updates and invalid_keys:
         # raw_msg_invalid = "\n".join(invalid_msgs)
         # msg_list_param.append(raw_msg_invalid)
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
+            msg_list_param.extend(invalid_msgs)
             msg_list_param.append(random_response_summary())
             msg_list_param.extend (format_params_message(updated_params,loan_number))
-            # msg = f"{raw_msg_invalid}\n\n ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری"
-            msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
-            # msg_list_param.append(random_invite())
-            rb =True
+            
+            # msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
+            
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_duration" or k == "loan_amount"):
+                msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را مجدد تغییر بدی."
+                msg_list_param.append(msg)
+                msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
+                rb =False
+            else:
+                msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری."
+                msg_list_param.append(msg)
+                rb =True
         else:
             # Generate a summary message for valid updates
             # raw_msg_valid = random_response_summary(format_params_message(updated_params,loan_number))
@@ -216,11 +241,12 @@ def extract_parameters(
             msg_list_param.extend(invalid_msgs)
             msg_list_param.append(random_response_summary())
             msg_list_param.extend(format_params_message(updated_params,loan_number))
-            msg_list_param.append(random_invite())
-
-            # msg_list_param.append(raw_msg_valid)
-            
-            rb = True
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_duration" or k == "loan_amount"):
+                msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
+                rb =False
+            else:
+                msg_list_param.append(random_invite())
+                rb = True
     else:
         # No updates: use the template-based reply
         # msg = raw_msg
