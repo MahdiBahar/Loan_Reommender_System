@@ -224,7 +224,7 @@ def extract_parameters(
             
             # msg_list_param.append("ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را همین جا تغییر بدی یا اگر خواستی به صفحه توصیه گر بری")
             
-            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_duration" or k == "loan_amount"):
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_amount" or k == "loan_amount"):
                 msg = "ببین، باتوجه به اطلاعاتی که دادی، وامی نتونستم پیدا کنم. میتونی مقادیر را مجدد تغییر بدی."
                 msg_list_param.append(msg)
                 msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
@@ -241,7 +241,7 @@ def extract_parameters(
             msg_list_param.extend(invalid_msgs)
             msg_list_param.append(random_response_summary())
             msg_list_param.extend(format_params_message(updated_params,loan_number))
-            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_duration" or k == "loan_amount"):
+            if all(updated_params.get(k) is None for k in updated_params if k == "deposit_amount" or k == "loan_amount"):
                 msg_list_param.append("اگر مقدار وام یا میزان سپرده مدنظرت را بهم بگی بهتر میتونم کمکت کنم.")
                 rb =False
             else:
