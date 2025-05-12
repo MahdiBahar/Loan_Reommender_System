@@ -62,11 +62,7 @@ def calculate_sort_order(loan: Dict[str, Any]) -> None:
 
 
 def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, Any]]:
-    """
-    Given desired loan amount 'la', update each record's
-    loan_amount, monthly_repayment, deposit_amount,
-    then filter and return valid records.
-    """
+    
     for rec in records:
         # calculate monthly repayment
         r = rec.get('repayment_duration', 0)
@@ -95,21 +91,29 @@ def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, A
 
 
 def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, Any]]:
-    """
-    Given deposit amount 'da', update each record's
-    loan_amount, monthly_repayment, deposit_amount,
-    then filter and return valid records.
-    """
+    
     for rec in records:
+        valid_da = da
+        if  rec.get('maximum_deposit_amount').lower() != 'nan':
+            max_dep = int(rec.get('maximum_deposit_amount'))
+            try:
+                if  valid_da > max_dep:
+                    valid_da = max_dep
+            except:
+                print("Except")
         coeff = rec.get('loan_coefficient', 0) / 100
-        la = coeff * da
+        la = coeff * valid_da
+        if la > rec.get('loan_amount_limit', float('inf')):
+            la = rec.get('loan_amount_limit', float('inf'))
+            valid_da =  (la / coeff) 
+
         r = rec.get('repayment_duration', 0)
         ir_monthly = rec.get('interest_rate', 0) / (12 * 100)
         num = la * ir_monthly * (1 + ir_monthly) ** r
         den = (1 + ir_monthly) ** r - 1
         rec['loan_amount'] = la
         rec['monthly_repayment'] = num / den  # change to Rial
-        rec['deposit_amount'] = da
+        rec['deposit_amount'] = valid_da
         calculate_sort_order(rec)
 
     def valid(rec: Dict[str, Any]) -> bool:
@@ -130,6 +134,8 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
 
 
 
+
+
 def query_complex(
     scenarios: List[Dict[str, Any]],
     deposit_amount: Optional[float] = None,
@@ -143,9 +149,9 @@ def query_complex(
     """
     matches = []
     for rec in scenarios:
-        # deposit range: up to 1.6x
+
         cond_da = (deposit_amount is None or
-                   rec.get('deposit_amount', 0) <= deposit_amount * 1.6)
+                   rec.get('deposit_amount', 0) <= deposit_amount)
         cond_rd = (repayment_duration is None or
                    rec.get('repayment_duration') == repayment_duration)
         cond_dep = (deposit_duration is None or
