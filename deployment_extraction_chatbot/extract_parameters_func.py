@@ -118,6 +118,7 @@ def extract_parameters(
     valid_updates: Dict[str, Any] = {}
     invalid_msgs = []
     invalid_keys = []
+    inv_keys = []
     # Template logic for raw message
     if new_params.get("Loan_field") and all(
         new_params.get(k) is None for k in new_params if k != "Loan_field"
@@ -163,8 +164,10 @@ def extract_parameters(
                 valid_updates[k] = v
             else:
                 invalid_keys.append(k)
+                inv_keys.append(LABELS[k])
                 invalid_msgs.append(
-                    random_invalid(LABELS[k])
+                    random_invalid(LABELS[k]) 
+                    # + f"invalid_key : {inv_keys}"
                     + (f"( راهنمایی : مقادیر مجاز  {hint}.)" if hint else "")
                 )
 
@@ -182,7 +185,7 @@ def extract_parameters(
         # Case: only valid
     elif valid_updates and not invalid_keys:
         first_result, loan_number = param_values_chat(updated_params)
-    
+        
         if loan_number == 0:
             msg_list_param.append(random_response_summary())
             msg_list_param.extend (format_params_message(updated_params,loan_number))
@@ -216,6 +219,7 @@ def extract_parameters(
     elif valid_updates and invalid_keys:
         # raw_msg_invalid = "\n".join(invalid_msgs)
         # msg_list_param.append(raw_msg_invalid)
+        # inv_keys = invalid_keys
         first_result, loan_number = param_values_chat(updated_params)
         if loan_number == 0:
             msg_list_param.extend(invalid_msgs)
@@ -252,7 +256,7 @@ def extract_parameters(
         # msg = raw_msg
         # msg_list_param.append(msg)
         rb = False
-    return updated_params, msg_list_param, rb , first_result
+    return updated_params, msg_list_param, rb , first_result, inv_keys
 
 
 def param_values_chat(updated_params: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:

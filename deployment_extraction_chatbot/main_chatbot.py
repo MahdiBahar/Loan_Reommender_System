@@ -75,12 +75,13 @@ async def chat(req: ChatRequest):
             "params": {k: None for k in VALID_CRITERIA},
             "last_user_msg": "",
             "last_raw_params": {k: None for k in filtered_keys},
+            "invalid_keys" : []
         }
     entry = _sessions[sid]
     prior_params = entry["params"]
     prev_msg = entry["last_user_msg"]
     last_raw = entry["last_raw_params"]
-
+    inv_key = entry["invalid_keys"]
 
     # First-pass parse raw user text, with fallback on parse errors
     raw1 = parser_chain.predict(user_input=user_text)
@@ -95,8 +96,10 @@ async def chat(req: ChatRequest):
     one_last = sum(1 for v in last_raw.values() if v is not None) == 1
     no_new_list = [v is not None for v in new_raw_params.values()]
     no_new = not any(v is not None for v in new_raw_params.values())
-    short_input = len(user_text.split()) <= 5
+    short_input = len(user_text.split()) <= 7
     is_fallback = (no_new and one_last) and short_input
+    invalid_len_check = len(inv_key)>=1
+    is_fallback_invalid = no_new and invalid_len_check and short_input
 
      # DEBUG: log internal state
     print(f"DEBUG [{sid}]: one_last={one_last}, no_new={no_new}, short_input={short_input}")
@@ -104,11 +107,21 @@ async def chat(req: ChatRequest):
     print(f"DEBUG [{sid}]: last_raw={last_raw}")
     print(f"DEBUG [{sid}]: new_raw={new_raw}")
     print(f"DEBUG [{sid}]: new_raw_params={new_raw_params}")
-    if is_fallback and prev_msg:
+    print(f"DEBUG [{sid}]: invalid_key={inv_key}")
+    print(f"DEBUG [{sid}]: invalid_key_validation={is_fallback_invalid}")
+    if (is_fallback or is_fallback_invalid ) and prev_msg:
         # build combined input: only the single parameter phrase from last turn + current text
-        key = next(k for k, v in last_raw.items() if v is not None)
+        if is_fallback and not is_fallback_invalid:
+        
+            key = next(k for k, v in last_raw.items() if v is not None)
 
-        label = LABELS.get(key, key)
+            label = LABELS.get(key, key)
+
+        elif (not is_fallback and is_fallback_invalid) or ( is_fallback and is_fallback_invalid):
+            
+            label = inv_key[0]
+
+
 
         combined = f"{label} {user_text}".strip()
         print(f"DEBUG [{sid}]: combined={combined}")
@@ -120,16 +133,16 @@ async def chat(req: ChatRequest):
             new_raw = {k: None for k in VALID_CRITERIA}
         # extract parameters from the combined text
         # now extract with combined text
-        updated_params, msg, rb, first_result = extract_parameters(combined, prior_params,new_raw)
+        updated_params, msg, rb, first_result, invalid_key = extract_parameters(combined, prior_params,new_raw)
     else:
         # normal extraction
-        updated_params, msg, rb, first_result = extract_parameters(user_text, prior_params,new_raw)
+        updated_params, msg, rb, first_result, invalid_key = extract_parameters(user_text, prior_params,new_raw)
 
     # Persist state
     entry["params"] = updated_params
     entry["last_user_msg"] = user_text
     entry["last_raw_params"] = {k: new_raw.get(k) for k in filtered_keys}
-
+    entry["invalid_keys"] = invalid_key
     return ChatResponse(
         session_id=sid,
         extracted_parameters_value=updated_params,
