@@ -39,6 +39,14 @@ SUFFIXES = {
     "hello_msg" : ""
 }
 
+SUFFIXES_PERSIAN = {
+    "مقدار سپرده": "تومن",
+    "مقدار وام": "تومن",
+    "مدت سپرده": "ماه",
+    "دوره بازپرداخت": "ماه",
+    "رتبه اعتباری": "",
+    "نرخ سود": "درصد",
+}
 
 # In-memory session store
 # session_id -> { params, last_user_msg, last_raw_params }
@@ -96,7 +104,7 @@ async def chat(req: ChatRequest):
     one_last = sum(1 for v in last_raw.values() if v is not None) == 1
     no_new_list = [v is not None for v in new_raw_params.values()]
     no_new = not any(v is not None for v in new_raw_params.values())
-    short_input = len(user_text.split()) <= 7
+    short_input = len(user_text.split()) <= 4
     is_fallback = (no_new and one_last) and short_input
     invalid_len_check = len(inv_key)>=1
     is_fallback_invalid = no_new and invalid_len_check and short_input
@@ -121,9 +129,7 @@ async def chat(req: ChatRequest):
             
             label = inv_key[0]
 
-
-
-        combined = f"{label} {user_text}".strip()
+        combined = f"{label} {user_text} {SUFFIXES_PERSIAN.get(label)}".strip()
         print(f"DEBUG [{sid}]: combined={combined}")
         # rerun extraction chain on combined text
         raw2 = parser_chain.predict(user_input=combined)
