@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional
 
 # Load parameter weights once
 def load_record() -> Dict[str, Any]:
-    with open('MEC-LoanRecomn_Scenarios-V19.json', 'r', encoding='utf-8') as f:
+    with open('MEC-LoanRecomn_Scenarios-V20.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
 # _records = load_record()
