@@ -13,6 +13,8 @@ def load_record() -> Dict[str, Any]:
 
 
 
+from typing import Tuple
+
 def get_query_params( _records, 
     deposit__amount: Optional[float] = None,
     repayment__duration: Optional[int] = None,
@@ -20,7 +22,7 @@ def get_query_params( _records,
     interest__rate: Optional[float] = None,
     credit__score: Optional[str] = None,
     loan__amount: Optional[float] = None
-) -> List[Dict[str, Any]]:   #Input values are Toman
+) -> Tuple[List[Dict[str, Any]], int]:   #Input values are Toman
 
 
     if loan__amount:

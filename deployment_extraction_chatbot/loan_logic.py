@@ -78,7 +78,8 @@ def update_with_la(records: List[Dict[str, Any]], la: float) -> List[Dict[str, A
         max_dep = rec.get('maximum_deposit_amount')
         if max_dep and max_dep.lower() != 'nan':
             try:
-                if rec.get('deposit_amount') > int(max_dep):
+                deposit_amount = rec.get('deposit_amount')
+                if deposit_amount is not None and deposit_amount > int(max_dep):
                     return False
             except ValueError:
                 pass
@@ -94,8 +95,9 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
     
     for rec in records:
         valid_da = da
-        if  rec.get('maximum_deposit_amount').lower() != 'nan':
-            max_dep = int(rec.get('maximum_deposit_amount'))
+        max_dep_val = rec.get('maximum_deposit_amount')
+        if max_dep_val is not None and str(max_dep_val).lower() != 'nan':
+            max_dep = int(max_dep_val)
             try:
                 if  valid_da > max_dep:
                     valid_da = max_dep
@@ -120,7 +122,8 @@ def update_with_da(records: List[Dict[str, Any]], da: float) -> List[Dict[str, A
         max_dep = rec.get('maximum_deposit_amount')
         if max_dep and max_dep.lower() != 'nan':
             try:
-                if rec.get('deposit_amount') > int(max_dep):
+                deposit_amount = rec.get('deposit_amount')
+                if deposit_amount is not None and deposit_amount > int(max_dep):
                     return False
             except ValueError:
                 pass

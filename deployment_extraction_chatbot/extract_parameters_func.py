@@ -96,7 +96,7 @@ def format_params_message(params: Dict[str, Any], loan_number) -> str:
 def extract_parameters(
     user_input: str,
     prior_params: Dict[str, Any], new_params
-) -> Tuple[Dict[str, Any], str]:
+) -> Tuple[Dict[str, Any], list, bool, dict, list]:
     
     # rb = False
     first_result = {}
@@ -112,7 +112,7 @@ def extract_parameters(
         # fallback = {k: None for k in VALID_CRITERIA}
         msg_list_param.append(random_irrelevant())
         
-        return fallback, msg_list_param , False, {}
+        return fallback, msg_list_param , False, {}, []
 
     # Determine template-based response and collect valid updates
     valid_updates: Dict[str, Any] = {}
@@ -263,16 +263,16 @@ def param_values_chat(updated_params: Dict[str, Any]) -> Tuple[Dict[str, Any], i
     
     # Safely extract values, defaulting to 0 or None
 
-    if updated_params.get("deposit_amount") is not None:
-
-        deposit_amount     = (updated_params.get("deposit_amount")) * 10
-
-    else: 
+    deposit_amount_raw = updated_params.get("deposit_amount")
+    if deposit_amount_raw is not None:
+        deposit_amount = deposit_amount_raw * 10
+    else:
         deposit_amount = None
 
 
-    if updated_params.get("loan_amount") is not None:
-        loan_amount        = (updated_params.get("loan_amount")) * 10
+    loan_amount_raw = updated_params.get("loan_amount")
+    if loan_amount_raw is not None:
+        loan_amount = loan_amount_raw * 10
     else:
         loan_amount = None
 
